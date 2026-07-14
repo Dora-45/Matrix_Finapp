@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ФинАналитика — Управленческий учёт</title>
+    <link rel="icon" href="data:," />
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#01696f" />
+    <meta name="description"
+          content="Система автоматизации финансовой отчётности и управленческого учёта" />
+
+    <style>
+        :root {
+            /* Бренд — эти переменные потом можно менять под компанию */
+            --brand-primary: #0f766e;
+            --brand-primary-hover: #0b5e57;
+            --brand-primary-soft: #e2f4f1;
+            --brand-accent: #2563eb;
+            --brand-accent-soft: #e7efff;
+            /* Базовая палитра интерфейса */
+            --bg-app: #f4f7fb;
+            --bg-grid: #eef3f9;
+            --surface: rgba(255, 255, 255, 0.82);
+            --surface-solid: #ffffff;
+            --surface-soft: #f8fbff;
+            --surface-muted: #f1f5f9;
+            --text-main: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --text-inverse: #ffffff;
+            --border: rgba(148, 163, 184, 0.25);
+            --border-strong: rgba(100, 116, 139, 0.28);
+            --success: #15803d;
+            --success-soft: #dcfce7;
+            --warning: #b45309;
+            --warning-soft: #ffedd5;
+            --danger: #b91c1c;
+            --danger-soft: #fee2e2;
+            --sidebar-bg: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+            --sidebar-text: #e5eef8;
+            --sidebar-muted: #94a3b8;
+            --radius-sm: 12px;
+            --radius-md: 18px;
+            --radius-lg: 24px;
+            --radius-pill: 999px;
+            --shadow-xs: 0 4px 12px rgba(15, 23, 42, 0.04);
+            --shadow-sm: 0 8px 24px rgba(15, 23, 42, 0.06);
+            --shadow-md: 0 18px 48px rgba(15, 23, 42, 0.10);
+            --sidebar-width: 292px;
+            --transition: 0.22s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+            color: var(--text-main);
+            background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.06), transparent 28%), radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 24%), linear-gradient(180deg, var(--bg-app) 0%, var(--bg-grid) 100%);
+        }
+
+        body {
+            overflow: hidden;
+        }
+
+        button, input, select, textarea {
+            font: inherit;
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: relative;
+            background: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 24px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            box-shadow: inset -1px 0 0 rgba(255,255,255,0.04);
+        }
+
+            .sidebar::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(circle at top left, rgba(45, 212, 191, 0.10), transparent 22%), radial-gradient(circle at bottom left, rgba(96, 165, 250, 0.08), transparent 18%);
+                pointer-events: none;
+            }
+
+        .brand,
+        .nav,
+        .sidebar__footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px 10px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .brand__eyebrow {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: var(--radius-pill);
+            background: rgba(255,255,255,0.08);
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .brand__title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .brand__subtitle {
+            font-size: 13px;
+            color: var(--sidebar-muted);
+            line-height: 1.6;
+            max-width: 26ch;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav__section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.10em;
+            color: var(--sidebar-muted);
+            margin: 12px 12px 4px;
+            font-weight: 700;
+        }
+
+        .nav__button {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: var(--sidebar-text);
+            padding: 14px 16px;
+            border-radius: 14px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 650;
+            transition: background var(--transition), transform var(--transition), box-shadow var(--transition), color var(--transition);
+        }
+
+            .nav__button:hover {
+                background: rgba(255,255,255,0.06);
+                transform: translateX(2px);
+            }
+
+            .nav__button.active {
+                background: linear-gradient(135deg, rgba(15, 118, 110, 0.34), rgba(37, 99, 235, 0.22));
+                color: #ffffff;
+                box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 8px 20px rgba(15, 118, 110, 0.18);
+            }
+
+        .sidebar__footer {
+            margin-top: auto;
+            padding: 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar__footer-title {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .sidebar__footer-text {
+            font-size: 13px;
+            color: var(--sidebar-muted);
+            line-height: 1.6;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 22px 30px;
+            background: rgba(255,255,255,0.70);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.55);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar__left {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .topbar__title {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .topbar__subtitle {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .topbar__actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.88);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            padding: 10px 16px;
+            font-size: 14px;
+            color: var(--text-main);
+            box-shadow: var(--shadow-xs);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--warning);
+            box-shadow: 0 0 0 5px rgba(180, 83, 9, 0.14);
+        }
+
+            .status-dot.online {
+                background: var(--success);
+                box-shadow: 0 0 0 5px rgba(21, 128, 61, 0.14);
+            }
+
+            .status-dot.offline {
+                background: var(--danger);
+                box-shadow: 0 0 0 5px rgba(185, 28, 28, 0.14);
+            }
+
+        .button {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform var(--transition), background var(--transition), box-shadow var(--transition), border-color var(--transition);
+        }
+
+            .button:hover {
+                transform: translateY(-1px);
+            }
+
+        .button--primary {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+            color: var(--text-inverse);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
+        }
+
+            .button--primary:hover {
+                box-shadow: 0 16px 28px rgba(37, 99, 235, 0.24);
+            }
+
+        .button--secondary {
+            background: rgba(255,255,255,0.85);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            box-shadow: var(--shadow-xs);
+        }
+
+            .button--secondary:hover {
+                background: var(--surface-solid);
+            }
+
+        .content {
+            padding: 26px 30px 34px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+            .screen.active {
+                display: flex;
+            }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .card,
+        .panel,
+        .meta-item {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.55);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card {
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .card::before {
+                content: "";
+                position: absolute;
+                inset: 0 auto auto 0;
+                width: 100%;
+                height: 4px;
+                background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+                opacity: 0.9;
+            }
+
+        .card__label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .card__value {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 8px;
+        }
+
+        .card__hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            padding: 22px;
+        }
+
+        .panel__title {
+            margin: 0 0 10px;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .panel__text {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 14px;
+            max-width: 70ch;
+        }
+
+        .panel__list {
+            margin: 16px 0 0;
+            padding-left: 18px;
+            color: var(--text-main);
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        .table-wrap {
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow-xs);
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: transparent;
+        }
+
+        thead {
+            background: rgba(241, 245, 249, 0.8);
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        th {
+            font-weight: 750;
+            color: var(--text-main);
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        .empty-box,
+        .dropzone {
+            border-radius: 20px;
+            padding: 28px;
+            background: rgba(255,255,255,0.72);
+            border: 1px dashed rgba(100, 116, 139, 0.30);
+            box-shadow: var(--shadow-xs);
+        }
+
+        .empty-box__title,
+        .dropzone__title {
+            margin: 0 0 10px;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .empty-box__text,
+        .dropzone__text {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .dropzone__text {
+            margin-bottom: 16px;
+        }
+
+        .import-box {
+            display: grid;
+            gap: 16px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .meta-item {
+            padding: 18px;
+        }
+
+        .meta-item__label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .meta-item__value {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+
+        .mobile-toggle {
+            display: none;
+        }
+
+        .theme-block {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .theme-swatch {
+            border-radius: 16px;
+            padding: 16px;
+            min-height: 96px;
+            color: white;
+            display: flex;
+            align-items: flex-end;
+            font-weight: 700;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .theme-swatch--primary {
+            background: linear-gradient(135deg, var(--brand-primary), #14b8a6);
+        }
+
+        .theme-swatch--accent {
+            background: linear-gradient(135deg, var(--brand-accent), #60a5fa);
+        }
+
+        .theme-swatch--success {
+            background: linear-gradient(135deg, var(--success), #4ade80);
+        }
+
+        .theme-swatch--danger {
+            background: linear-gradient(135deg, var(--danger), #ef4444);
+        }
+
+        @media (max-width: 1200px) {
+            .cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .layout-grid,
+            .theme-block {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 920px) {
+            body {
+                overflow: auto;
+            }
+
+            .app {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                width: 280px;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                z-index: 30;
+                min-height: 100vh;
+            }
+
+                .sidebar.open {
+                    transform: translateX(0);
+                }
+
+            .main {
+                min-height: 100vh;
+            }
+
+            .mobile-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .topbar {
+                padding: 18px;
+            }
+
+            .topbar__title {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 18px;
+            }
+
+            .cards,
+            .meta-grid,
+            .theme-block {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>   
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="brand__eyebrow">Matrix FinApp</div>
+                <div class="brand__title">ФинАналитика</div>
+                <div class="brand__subtitle">
+                    Управленческий учёт, отчётность, импорт выписок и аналитика в одном интерфейсе.
+                </div>
+            </div>
+
+            <nav class="nav">
+                <div class="nav__section-title">Основное</div>
+                <button class="nav__button active" data-screen="dashboard">Дашборд</button>
+                <button class="nav__button" data-screen="pnl">ОПиУ</button>
+                <button class="nav__button" data-screen="cashflow">ДДС</button>
+
+                <div class="nav__section-title">Данные</div>
+                <button class="nav__button" data-screen="imports">Импорт данных</button>
+                <button class="nav__button" data-screen="validation">Проверки</button>
+
+                <div class="nav__section-title">Система</div>
+                <button class="nav__button" data-screen="settings">Настройки</button>
+            </nav>
+
+            <div class="sidebar__footer">
+                <div class="sidebar__footer-title">Архитектура проекта</div>
+                <div class="sidebar__footer-text">
+                    SQLite локально сейчас, PostgreSQL можно добавить позже без переписывания отчётов.
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar__left">
+                    <h1 class="topbar__title" id="page-title">Дашборд</h1>
+                    <p class="topbar__subtitle" id="page-subtitle">
+                        Общая картина по системе и статусу интеграций.
+                    </p>
+                </div>
+
+                <div class="topbar__actions">
+                    <button class="button button--secondary mobile-toggle" id="mobile-toggle">
+                        Меню
+                    </button>
+
+                    <div class="status-badge">
+                        <span class="status-dot" id="api-status-dot"></span>
+                        <span id="api-status-text">API не проверено</span>
+                    </div>
+
+                    <button class="button button--secondary" id="check-api-button">
+                        Проверить API
+                    </button>
+                </div>
+            </header>
+
+            <section class="content">
+                <div class="screen active" id="screen-dashboard">
+                    <div class="cards">
+                        <div class="card">
+                            <div class="card__label">Статус API</div>
+                            <div class="card__value" id="dashboard-api-status">Ожидание</div>
+                            <div class="card__hint">Нажми «Проверить API», чтобы убедиться, что FastAPI отвечает.</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__label">База данных</div>
+                            <div class="card__value">SQLite</div>
+                            <div class="card__hint">На этом этапе работаем локально, без облачной БД.</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__label">Импорт выписок</div>
+                            <div class="card__value">Готовим</div>
+                            <div class="card__hint">Следующие этапы добавят загрузку Excel/CSV и нормализацию.</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__label">Модули</div>
+                            <div class="card__value">5 экранов</div>
+                            <div class="card__hint">Каркас интерфейса уже готов для расширения.</div>
+                        </div>
+                    </div>
+
+                    <div class="layout-grid">
+                        <div class="panel">
+                            <h2 class="panel__title">Что уже есть</h2>
+                            <p class="panel__text">
+                                На этом этапе мы собираем устойчивую основу интерфейса, чтобы потом без боли подключать таблицы,
+                                графики, импорт из банка, CRM и отчёты.
+                            </p>
+                            <ul class="panel__list">
+                                <li>Левое меню и навигация между разделами.</li>
+                                <li>Верхняя панель со статусом API.</li>
+                                <li>Подготовленные экраны под ОПиУ, ДДС, импорт и настройки.</li>
+                                <li>Проверка связи с FastAPI через реальный запрос.</li>
+                            </ul>
+                        </div>
+
+                        <div class="panel">
+                            <h2 class="panel__title">Что дальше</h2>
+                            <p class="panel__text">
+                                Следующим этапом мы улучшим визуальный стиль и сделаем интерфейс более похожим на современный
+                                финтех-продукт: аккуратнее типографика, карточки, цветовая схема и системные компоненты.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-pnl">
+                    <div class="panel">
+                        <h2 class="panel__title">Отчёт о прибылях и убытках</h2>
+                        <p class="panel__text">
+                            Здесь будет таблица ОПиУ по месяцам, кварталам и году. На следующем этапе отчётов мы подключим сюда
+                            реальный расчёт из базы данных и импортированных операций.
+                        </p>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Статья</th>
+                                    <th>Январь</th>
+                                    <th>Февраль</th>
+                                    <th>Март</th>
+                                    <th>Итого</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Выручка</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                                <tr>
+                                    <td>Себестоимость</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                                <tr>
+                                    <td>Операционные расходы</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                                <tr>
+                                    <td>Чистая прибыль</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-cashflow">
+                    <div class="panel">
+                        <h2 class="panel__title">ДДС — прямой метод</h2>
+                        <p class="panel__text">
+                            Здесь будет отчёт по поступлениям и платежам с детализацией по направлениям и статьям движения денег.
+                        </p>
+                    </div>
+
+                    <div class="empty-box">
+                        <h3 class="empty-box__title">Каркас раздела готов</h3>
+                        <p class="empty-box__text">
+                            Когда подключим импорт выписки и обработку данных, здесь появятся реальные движения денежных средств.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-imports">
+                    <div class="panel">
+                        <h2 class="panel__title">Импорт данных</h2>
+                        <p class="panel__text">
+                            Раздел подготовлен под загрузку банковских выписок, Excel/CSV-файлов и интеграцию с CRM Холи Хоп.
+                        </p>
+                    </div>
+
+                    <div class="import-box">
+                        <div class="dropzone">
+                            <div class="dropzone__title">Зона загрузки файлов</div>
+                            <div class="dropzone__text">
+                                На следующем этапе сюда добавим drag-and-drop, выбор файла и отправку на backend.
+                            </div>
+                            <button class="button button--primary" type="button">Выбрать файл</button>
+                        </div>
+
+                        <div class="meta-grid">
+                            <div class="meta-item">
+                                <div class="meta-item__label">Поддерживаемые форматы</div>
+                                <div class="meta-item__value">.xlsx, .xls, .csv</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-item__label">Источник CRM</div>
+                                <div class="meta-item__value">API Холи Хоп (подключим отдельным этапом)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-validation">
+                    <div class="panel">
+                        <h2 class="panel__title">Проверки и маркеры ошибок</h2>
+                        <p class="panel__text">
+                            Здесь появятся дубли, незаполненные поля, аномалии, нарушения формата и контрольные суммы.
+                        </p>
+                    </div>
+
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-item__label">Дубли</div>
+                            <div class="meta-item__value">Пока нет данных для проверки</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-item__label">Пустые обязательные поля</div>
+                            <div class="meta-item__value">Пока нет данных для проверки</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-item__label">Аномальные значения</div>
+                            <div class="meta-item__value">Пока нет данных для проверки</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-item__label">Контрольные суммы</div>
+                            <div class="meta-item__value">Будут подключены после расчётов</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-settings">
+                    <div class="panel">
+                        <h2 class="panel__title">Настройки системы</h2>
+                        <p class="panel__text">
+                            Этот экран подготовлен для настроек подключения, цвета бренда, параметров расчётов и переменных среды.
+                        </p>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="panel__title">Текущая визуальная схема</h2>
+                        <p class="panel__text">
+                            Интерфейс уже переведён на дизайн-токены. Это значит, что позже мы сможем быстро
+                            подстроить приложение под фирменные цвета компании без переписывания всех компонентов.
+                        </p>
+
+                        <div class="theme-block" style="margin-top: 18px;">
+                            <div class="theme-swatch theme-swatch--primary">Primary</div>
+                            <div class="theme-swatch theme-swatch--accent">Accent</div>
+                            <div class="theme-swatch theme-swatch--success">Success</div>
+                            <div class="theme-swatch theme-swatch--danger">Danger</div>
+                        </div>
+                    </div>
+
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-item__label">Текущая БД</div>
+                            <div class="meta-item__value">SQLite</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-item__label">Режим</div>
+                            <div class="meta-item__value" id="settings-env">Загрузка...</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-item__label">Адрес API</div>
+                            <div class="meta-item__value">/api/v1</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-item__label">Архитектура</div>
+                            <div class="meta-item__value">Модульная, с подготовкой к PostgreSQL</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const screenConfig = {
+            dashboard: {
+                title: "Дашборд",
+                subtitle: "Общая картина по системе и статусу интеграций."
+            },
+            pnl: {
+                title: "ОПиУ",
+                subtitle: "Каркас отчёта о прибылях и убытках."
+            },
+            cashflow: {
+                title: "ДДС",
+                subtitle: "Каркас отчёта по движению денежных средств."
+            },
+            imports: {
+                title: "Импорт данных",
+                subtitle: "Загрузка файлов и подготовка интеграции с CRM."
+            },
+            validation: {
+                title: "Проверки",
+                subtitle: "Будущая система маркеров ошибок и контроля качества данных."
+            },
+            settings: {
+                title: "Настройки",
+                subtitle: "Системные параметры приложения и окружения."
+            }
+        };
+
+        const navButtons = document.querySelectorAll(".nav__button");
+        const screens = document.querySelectorAll(".screen");
+        const pageTitle = document.getElementById("page-title");
+        const pageSubtitle = document.getElementById("page-subtitle");
+        const apiStatusDot = document.getElementById("api-status-dot");
+        const apiStatusText = document.getElementById("api-status-text");
+        const dashboardApiStatus = document.getElementById("dashboard-api-status");
+        const checkApiButton = document.getElementById("check-api-button");
+        const settingsEnv = document.getElementById("settings-env");
+        const sidebar = document.getElementById("sidebar");
+        const mobileToggle = document.getElementById("mobile-toggle");
+
+        function showScreen(screenName) {
+            navButtons.forEach(button => {
+                button.classList.toggle("active", button.dataset.screen === screenName);
+            });
+
+            screens.forEach(screen => {
+                screen.classList.toggle("active", screen.id === `screen-${screenName}`);
+            });
+
+            pageTitle.textContent = screenConfig[screenName].title;
+            pageSubtitle.textContent = screenConfig[screenName].subtitle;
+
+            if (window.innerWidth <= 920) {
+                sidebar.classList.remove("open");
+            }
+        }
+
+        async function checkApiStatus() {
+            apiStatusText.textContent = "Проверяем API...";
+            dashboardApiStatus.textContent = "Проверка...";
+            apiStatusDot.className = "status-dot";
+
+            try {
+                const response = await fetch("/api/v1/health");
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                apiStatusText.textContent = `API онлайн: ${data.status}`;
+                dashboardApiStatus.textContent = "Онлайн";
+                apiStatusDot.className = "status-dot online";
+            } catch (error) {
+                apiStatusText.textContent = "API недоступен";
+                dashboardApiStatus.textContent = "Ошибка";
+                apiStatusDot.className = "status-dot offline";
+                console.error("Ошибка проверки API:", error);
+            }
+        }
+
+        async function loadSettingsInfo() {
+            try {
+                const response = await fetch("/api/v1/settings");
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                settingsEnv.textContent = `${data.environment} / debug=${data.debug}`;
+            } catch (error) {
+                settingsEnv.textContent = "Не удалось загрузить";
+                console.error("Ошибка загрузки настроек:", error);
+            }
+        }
+
+        navButtons.forEach(button => {
+            button.addEventListener("click", () => {
+                showScreen(button.dataset.screen);
+            });
+        });
+
+        checkApiButton.addEventListener("click", checkApiStatus);
+
+        mobileToggle.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+
+        window.addEventListener("resize", () => {
+            if (window.innerWidth > 920) {
+                sidebar.classList.remove("open");
+            }
+        });
+
+        async function init() {
+            showScreen("dashboard");
+            await loadSettingsInfo();
+            await checkApiStatus();
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", async () => {
+                try {
+                    await navigator.serviceWorker.register("/sw.js");
+                    console.log("Service Worker зарегистрирован");
+                } catch (error) {
+                    console.error("Ошибка регистрации Service Worker:", error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
