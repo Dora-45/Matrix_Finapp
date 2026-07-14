@@ -24,11 +24,11 @@ class ClassificationService:
             matched = self._find_category(op, categories)
             if matched:
                 op.article = matched.article
-                op.project = matched.section
+                op.section = matched.section
                 classified += 1
             else:
                 op.article = "Прочие поступления" if op.direction == "inflow" else "Прочие расходы"
-                op.project = "operating"
+                op.section = "operating"
                 fallbacked += 1
 
         self.db.commit()
@@ -48,11 +48,11 @@ class ClassificationService:
             matched = self._find_category(op, categories)
             if matched:
                 op.article = matched.article
-                op.project = matched.section
+                op.section = matched.section
                 matched_count += 1
             else:
                 op.article = "Прочие поступления" if op.direction == "inflow" else "Прочие расходы"
-                op.project = "operating"
+                op.section = "operating"
                 fallbacked += 1
 
         self.db.commit()

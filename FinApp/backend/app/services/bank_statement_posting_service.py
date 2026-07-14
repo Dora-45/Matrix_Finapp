@@ -47,7 +47,9 @@ class BankStatementPostingService:
                 source_file=row.source_file or "unknown",
                 source_sheet=row.source_sheet or "unknown",
                 article=row.article,
-                project=row.project,
+                # project в BankStatementRow хранил секцию — переносим в section
+                section=row.project,
+                project=None,
                 is_manual="no",
             )
 

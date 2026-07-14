@@ -29,8 +29,10 @@ class CashflowOperation(Base):
 
     article: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
 
-    # Временно используем для секции ДДС:
-    # operating | investing | financing | transfer
+    # Раздел ДДС: operating | investing | financing | transfer
+    section: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+
+    # Бизнес-проект (Хоккей, Фитнес и т.д.) — для будущего использования
     project: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     is_manual: Mapped[str | None] = mapped_column(String(10), nullable=True)

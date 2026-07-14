@@ -22,7 +22,7 @@ class CashFlowService:
             .filter(
                 CashflowOperation.operation_datetime >= start_dt,
                 CashflowOperation.operation_datetime <= end_dt,
-                CashflowOperation.project != "transfer",
+                CashflowOperation.section != "transfer",
             )
             .all()
         )
@@ -30,7 +30,7 @@ class CashFlowService:
         grouped = {}
 
         for op in operations:
-            section = op.project or "operating"
+            section = op.section or "operating"
             direction = op.direction
             article = op.article or ("Прочие поступления" if direction == "inflow" else "Прочие расходы")
             key = (section, direction, article)
@@ -60,30 +60,32 @@ class CashFlowService:
                 )
             )
 
-        inflow_lines = [line for line in lines if line.direction == "inflow"]
-        outflow_lines = [line for line in lines if line.direction == "outflow"]
+        inflow_lines = [l for l in lines if l.direction == "inflow"]
+        outflow_lines = [l for l in lines if l.direction == "outflow"]
 
-        total_inflow = round(sum(line.total for line in inflow_lines), 2)
-        total_outflow = round(sum(line.total for line in outflow_lines), 2)
+        total_inflow = round(sum(l.total for l in inflow_lines), 2)
+        total_outflow = round(sum(l.total for l in outflow_lines), 2)
+        net_cashflow = round(total_inflow - total_outflow, 2)
 
-        def net_by_account(account_name: str) -> float:
-            inflow = sum(getattr(line, account_name) for line in inflow_lines)
-            outflow = sum(getattr(line, account_name) for line in outflow_lines)
-            return round(inflow - outflow, 2)
-
-        unclassified_count = sum(
-            1
-            for op in operations
-            if op.article in ("Прочие поступления", "Прочие расходы")
+        net_checking = round(
+            sum(l.checking for l in inflow_lines) - sum(l.checking for l in outflow_lines), 2
+        )
+        net_credit = round(
+            sum(l.credit for l in inflow_lines) - sum(l.credit for l in outflow_lines), 2
+        )
+        net_personal = round(
+            sum(l.personal for l in inflow_lines) - sum(l.personal for l in outflow_lines), 2
         )
 
-        section_order = {
-            "operating": 0,
-            "investing": 1,
-            "financing": 2,
-        }
-
-        lines.sort(key=lambda x: (section_order.get(x.section, 99), x.direction, x.article))
+        unclassified_count = (
+            self.db.query(CashflowOperation)
+            .filter(
+                CashflowOperation.operation_datetime >= start_dt,
+                CashflowOperation.operation_datetime <= end_dt,
+                CashflowOperation.article == None,
+            )
+            .count()
+        )
 
         return CashflowReportResponse(
             period_from=str(date_from),
@@ -91,9 +93,9 @@ class CashFlowService:
             lines=lines,
             total_inflow=total_inflow,
             total_outflow=total_outflow,
-            net_cashflow=round(total_inflow - total_outflow, 2),
-            net_cashflow_checking=net_by_account("checking"),
-            net_cashflow_credit=net_by_account("credit"),
-            net_cashflow_personal=net_by_account("personal"),
+            net_cashflow=net_cashflow,
+            net_cashflow_checking=net_checking,
+            net_cashflow_credit=net_credit,
+            net_cashflow_personal=net_personal,
             unclassified_count=unclassified_count,
         )

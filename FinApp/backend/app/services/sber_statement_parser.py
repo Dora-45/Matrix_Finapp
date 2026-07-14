@@ -7,12 +7,22 @@ from pathlib import Path
 import pandas as pd
 
 
+_CREDIT_ACCOUNT_PHRASES = [
+    "выдача кредита",
+    "транш по кредитному договору",
+    "кредитные средства зачислены",
+    "зачисление кредита",
+    "погашение основного долга",
+    "погашение кредита",
+    "уплата процентов по кредиту",
+    "проценты по кредитному договору",
+]
+
+
 def detect_account_type(account_number: str, payment_purpose: str) -> str:
     purpose = (payment_purpose or "").lower()
-
-    if "выдача кредита" in purpose or "кредит" in purpose:
+    if any(phrase in purpose for phrase in _CREDIT_ACCOUNT_PHRASES):
         return "credit"
-
     return "checking"
 
 
@@ -95,7 +105,6 @@ def parse_sber_statement(file_path: str) -> list[dict]:
             else:
                 continue
 
-            own_account_raw = row.get("Счет", "")
             debit_account = row.get("Дебет", "")
             credit_account = row.get("Кредит", "")
 
