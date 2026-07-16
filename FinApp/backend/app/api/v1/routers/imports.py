@@ -56,6 +56,8 @@ async def upload_bank_statement(
 
     for i, row_data in enumerate(parsed_rows):
         safe_data = {k: v for k, v in row_data.items() if k in _STATEMENT_COLUMNS}
+        safe_data.pop("source_file", None)
+
         row = BankStatementRow(
             import_batch=import_batch,
             source_file=file.filename,
