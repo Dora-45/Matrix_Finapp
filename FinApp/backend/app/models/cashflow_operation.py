@@ -27,10 +27,14 @@ class CashflowOperation(Base):
     source_file: Mapped[str | None] = mapped_column(String(255), nullable=True)
     source_sheet: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
+    # ДДС
     article: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    section: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)  # operating | investing | financing | transfer
 
-    # Раздел ДДС: operating | investing | financing | transfer
-    section: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    # ОПиУ
+    pnl_group: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    pnl_article: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    pnl_sign: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)  # income | expense
 
     # Бизнес-проект (Хоккей, Фитнес и т.д.) — для будущего использования
     project: Mapped[str | None] = mapped_column(String(100), nullable=True)
