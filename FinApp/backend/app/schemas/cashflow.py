@@ -38,3 +38,31 @@ class CashflowReportResponse(BaseModel):
     net_cashflow_credit: float
     net_cashflow_personal: float
     unclassified_count: int
+
+from decimal import Decimal
+
+
+class PnLReportLine(BaseModel):
+    pnl_group: str
+    pnl_article: str
+    pnl_sign: str
+    total: Decimal
+
+
+class PnLReportResponse(BaseModel):
+    period_from: str
+    period_to: str
+
+    revenue: Decimal
+    cogs: Decimal
+    gross_profit: Decimal
+
+    operating_expenses: Decimal
+    operating_profit: Decimal
+
+    other_income: Decimal
+    other_expenses: Decimal
+    taxes: Decimal
+    net_profit: Decimal
+
+    lines: list[PnLReportLine]
