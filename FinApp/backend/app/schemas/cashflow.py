@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from pydantic import BaseModel
 
 
@@ -38,8 +40,6 @@ class CashflowReportResponse(BaseModel):
     net_cashflow_credit: float
     net_cashflow_personal: float
     unclassified_count: int
-
-from decimal import Decimal
 
 
 class PnLReportLine(BaseModel):
