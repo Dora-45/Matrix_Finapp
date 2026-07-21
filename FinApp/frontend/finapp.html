@@ -261,6 +261,24 @@ td { color:#374151; }
           </div>
         </div>
 
+        <div class="panel">
+          <h2 class="panel-title">Чистый поток по типам счетов</h2>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-item-label">Расчётный счёт</div>
+              <div class="meta-item-value" id="cashflow-net-checking">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-item-label">Кредитный счёт</div>
+              <div class="meta-item-value" id="cashflow-net-credit">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-item-label">Личный счёт</div>
+              <div class="meta-item-value" id="cashflow-net-personal">—</div>
+            </div>
+          </div>
+        </div>
+
         <div class="panel" id="cashflow-table-panel">
           <h2 class="panel-title">Детализация по статьям</h2>
           <div class="table-wrap">
@@ -270,11 +288,14 @@ td { color:#374151; }
                   <th>Раздел</th>
                   <th>Тип</th>
                   <th>Статья</th>
-                  <th>Сумма</th>
+                  <th>Расчётный</th>
+                  <th>Кредитный</th>
+                  <th>Личный</th>
+                  <th>Итого</th>
                 </tr>
               </thead>
               <tbody id="cashflow-table-body">
-                <tr><td colspan="4">Выберите период и нажмите «Показать отчёт»</td></tr>
+                <tr><td colspan="7">Выберите период и нажмите «Показать отчёт»</td></tr>
               </tbody>
             </table>
           </div>
@@ -291,8 +312,8 @@ td { color:#374151; }
         <div class="import-box">
           <div class="dropzone" id="import-dropzone">
             <div class="dropzone-title">Загрузить выписку</div>
-            <div class="dropzone-text">Выберите файл .xlsx или .xls со страницы вашего банка</div>
-            <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" style="margin-bottom:12px;">
+            <div class="dropzone-text">Выберите файл .xlsx или .xls со страницы вашего банка (СберБизнес)</div>
+            <input type="file" id="import-file-input" accept=".xlsx,.xls" style="margin-bottom:12px;">
             <br>
             <button class="button button--primary" id="import-upload-button" type="button">Загрузить</button>
           </div>
@@ -303,9 +324,48 @@ td { color:#374151; }
               <div class="meta-item-value" id="import-status-text">Файл не выбран</div>
             </div>
             <div class="meta-item">
-              <div class="meta-item-label">Результат</div>
-              <div class="meta-item-value" id="import-result-text">—</div>
+              <div class="meta-item-label">Партия импорта</div>
+              <div class="meta-item-value" id="import-batch-text">—</div>
             </div>
+          </div>
+
+          <div class="cards" id="import-summary-cards" style="display:none;">
+            <div class="card">
+              <div class="card-label">Всего строк</div>
+              <div class="card-value" id="import-total-rows">—</div>
+              <div class="card-hint">Распознано в файле</div>
+            </div>
+            <div class="card">
+              <div class="card-label">Валидных строк</div>
+              <div class="card-value" id="import-valid-rows" style="color:var(--success);">—</div>
+              <div class="card-hint">Прошли проверки</div>
+            </div>
+            <div class="card">
+              <div class="card-label">С ошибками</div>
+              <div class="card-value" id="import-invalid-rows" style="color:var(--danger);">—</div>
+              <div class="card-hint">Требуют внимания</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="import-preview-panel" style="display:none;">
+          <h2 class="panel-title">Превью первых строк</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>№</th>
+                  <th>Дата</th>
+                  <th>Тип</th>
+                  <th>Сумма</th>
+                  <th>Счёт</th>
+                  <th>Контрагент</th>
+                  <th>Назначение</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="import-preview-body"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -433,16 +493,19 @@ async function loadCashflowReport() {
   const tableBody = document.getElementById('cashflow-table-body');
 
   if (!dateFrom || !dateTo) {
-    tableBody.innerHTML = '<tr><td colspan="4">Укажите даты периода</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7">Укажите даты периода</td></tr>';
     return;
   }
 
-  tableBody.innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="7">Загрузка...</td></tr>';
 
   try {
     const url = `/api/v1/reports/cashflow?date_from=${dateFrom}&date_to=${dateTo}`;
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
+    }
     const data = await response.json();
 
     document.getElementById('cashflow-total-inflow').textContent = data.total_inflow.toLocaleString('ru-RU') + ' ₽';
@@ -450,8 +513,12 @@ async function loadCashflowReport() {
     document.getElementById('cashflow-net').textContent = data.net_cashflow.toLocaleString('ru-RU') + ' ₽';
     document.getElementById('cashflow-unclassified').textContent = data.unclassified_count;
 
+    document.getElementById('cashflow-net-checking').textContent = data.net_cashflow_checking.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('cashflow-net-credit').textContent = data.net_cashflow_credit.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('cashflow-net-personal').textContent = data.net_cashflow_personal.toLocaleString('ru-RU') + ' ₽';
+
     if (!data.lines || data.lines.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4">За этот период операций не найдено</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="7">За этот период операций не найдено</td></tr>';
       return;
     }
 
@@ -460,12 +527,15 @@ async function loadCashflowReport() {
         <td>${line.section}</td>
         <td>${line.direction === 'inflow' ? 'Поступление' : 'Расход'}</td>
         <td>${line.article}</td>
-        <td>${line.total.toLocaleString('ru-RU')} ₽</td>
+        <td>${line.checking.toLocaleString('ru-RU')} ₽</td>
+        <td>${line.credit.toLocaleString('ru-RU')} ₽</td>
+        <td>${line.personal.toLocaleString('ru-RU')} ₽</td>
+        <td><strong>${line.total.toLocaleString('ru-RU')} ₽</strong></td>
       </tr>
     `).join('');
 
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="4">Ошибка загрузки отчёта: ' + error.message + '</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7">Ошибка загрузки отчёта: ' + error.message + '</td></tr>';
     console.error('Ошибка загрузки ДДС', error);
   }
 }
@@ -473,32 +543,73 @@ async function loadCashflowReport() {
 async function uploadBankStatement() {
   const fileInput = document.getElementById('import-file-input');
   const statusText = document.getElementById('import-status-text');
-  const resultText = document.getElementById('import-result-text');
+  const batchText = document.getElementById('import-batch-text');
+  const summaryCards = document.getElementById('import-summary-cards');
+  const previewPanel = document.getElementById('import-preview-panel');
+  const previewBody = document.getElementById('import-preview-body');
 
   if (!fileInput.files || fileInput.files.length === 0) {
     statusText.textContent = 'Выберите файл перед загрузкой';
     return;
   }
 
+  const allowedExtensions = ['.xlsx', '.xls'];
+  const fileName = fileInput.files[0].name.toLowerCase();
+  const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+  if (!hasValidExtension) {
+    statusText.textContent = 'Разрешены только файлы .xlsx и .xls';
+    return;
+  }
+
   const formData = new FormData();
   formData.append('file', fileInput.files[0]);
 
-  statusText.textContent = 'Загрузка...';
-  resultText.textContent = '—';
+  statusText.textContent = 'Загрузка и проверка...';
+  batchText.textContent = '—';
+  summaryCards.style.display = 'none';
+  previewPanel.style.display = 'none';
 
   try {
     const response = await fetch('/api/v1/imports/bank-statement', {
       method: 'POST',
       body: formData
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
+    }
+
     const data = await response.json();
 
-    statusText.textContent = 'Загрузка завершена';
-    resultText.textContent = `Строк: ${data.total_rows ?? '—'}`;
+    statusText.textContent = `Загружено: ${data.filename}`;
+    batchText.textContent = data.import_batch;
+
+    document.getElementById('import-total-rows').textContent = data.total_rows;
+    document.getElementById('import-valid-rows').textContent = data.valid_rows;
+    document.getElementById('import-invalid-rows').textContent = data.invalid_rows;
+    summaryCards.style.display = 'grid';
+
+    if (data.preview && data.preview.length > 0) {
+      previewBody.innerHTML = data.preview.map(row => `
+        <tr>
+          <td>${row.row_number}</td>
+          <td>${row.date}</td>
+          <td>${row.direction ?? '—'}</td>
+          <td>${row.amount}</td>
+          <td>${row.account_type ?? '—'}</td>
+          <td>${row.counterparty ?? '—'}</td>
+          <td>${row.purpose ?? '—'}</td>
+          <td style="color:${row.status === 'valid' ? 'var(--success)' : 'var(--danger)'};">
+            ${row.status}${row.message ? ' — ' + row.message : ''}
+          </td>
+        </tr>
+      `).join('');
+      previewPanel.style.display = 'flex';
+    }
+
   } catch (error) {
-    statusText.textContent = 'Ошибка загрузки';
-    resultText.textContent = error.message;
+    statusText.textContent = 'Ошибка загрузки: ' + error.message;
     console.error('Ошибка импорта выписки', error);
   }
 }
