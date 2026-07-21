@@ -32,6 +32,7 @@ class CashflowReportLine(BaseModel):
 class CashflowReportResponse(BaseModel):
     period_from: str
     period_to: str
+    accounts_included: list[str]
     lines: list[CashflowReportLine]
     total_inflow: float
     total_outflow: float
