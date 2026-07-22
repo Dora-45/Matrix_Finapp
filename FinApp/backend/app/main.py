@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.app.api.v1.api import api_router
 from backend.app.core.config import settings
 from backend.app.db.base import Base
-from backend.app.db.session import engine
+from backend.app.db.session import engine, SessionLocal
 
 import backend.app.models
 
@@ -20,6 +20,19 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+
+    # Заполняем справочник статей ДДС базовыми правилами, если он пуст.
+    # Это нужно, чтобы автоклассификация и выпадающий список статей
+    # работали сразу после первого запуска, без ручного заполнения БД.
+    from backend.app.repositories.cashflow_category_repository import (
+        CashflowCategoryRepository,
+    )
+
+    db = SessionLocal()
+    try:
+        CashflowCategoryRepository(db).seed_defaults()
+    finally:
+        db.close()
 
     print("\n=== REGISTERED ROUTES ===")
     for route in app.routes:

@@ -48,6 +48,17 @@ def get_batch_summary(
     return service.get_batch_summary(import_batch)
 
 
+@router.get("/batches")
+def list_batches(db: Session = Depends(get_db)):
+    """
+    Список всех загруженных партий импорта (история выписок).
+    Позволяет вернуться к любой ранее загруженной выписке и внести изменения —
+    ни одна партия не стирается при загрузке новой.
+    """
+    service = BankStatementReviewService(db)
+    return service.get_all_batches()
+
+
 @router.patch("/rows/{row_id}", response_model=BankStatementRowRead)
 def update_row(
     row_id: int,
@@ -81,6 +92,28 @@ def confirm_rows(
         status="ok",
         message="Строки подтверждены",
         affected_count=updated,
+    )
+
+
+@router.post("/auto-classify", response_model=BatchActionResponse)
+def auto_classify_batch(
+    payload: BatchPostRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Автоматически проставляет статью и раздел ДДС для строк батча без статьи,
+    используя ключевые слова из справочника CashflowCategory.
+    """
+    service = BankStatementReviewService(db)
+    result = service.auto_classify_batch(payload.import_batch)
+
+    return BatchActionResponse(
+        status="ok",
+        message=(
+            f"Автоклассификация завершена: {result['classified']} строк распознано, "
+            f"{result['fallbacked']} — присвоена статья по умолчанию"
+        ),
+        affected_count=result["total"],
     )
 
 
