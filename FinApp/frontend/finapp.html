@@ -28,7 +28,6 @@
   --radius: 16px;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
-
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; min-height:100%; font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
 body { overflow: hidden; }
@@ -123,6 +122,7 @@ td { color:#374151; }
       <button class="nav-button" data-screen="cashflow">ДДС</button>
       <div class="nav-section-title">Данные</div>
       <button class="nav-button" data-screen="imports">Импорт данных</button>
+      <button class="nav-button" data-screen="review">Проверка импорта</button>
       <button class="nav-button" data-screen="validation">Проверки</button>
       <div class="nav-section-title">Система</div>
       <button class="nav-button" data-screen="settings">Настройки</button>
@@ -329,6 +329,7 @@ td { color:#374151; }
               <div class="meta-item-value" id="import-batch-text">—</div>
             </div>
           </div>
+          <button class="button button--secondary" id="import-goto-review-button" type="button" style="display:none; margin-top:12px;">Перейти к проверке строк</button>
 
           <div class="cards" id="import-summary-cards" style="display:none;">
             <div class="card">
@@ -366,6 +367,86 @@ td { color:#374151; }
                 </tr>
               </thead>
               <tbody id="import-preview-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ПРОВЕРКА ИМПОРТА -->
+      <div class="screen" id="screen-review">
+        <div class="panel">
+          <h2 class="panel-title">Проверка и проводка импортированных строк</h2>
+          <p class="panel-text">Введите идентификатор партии импорта (получен на экране «Импорт данных»), отредактируйте статьи, подтвердите строки и проведите их в ДДС.</p>
+
+          <div class="meta-grid" style="margin-top:16px;">
+            <div class="meta-item">
+              <div class="meta-item-label">Партия импорта</div>
+              <input type="text" id="review-batch-input" class="field-input" placeholder="например, 3f2a1c9e-...">
+            </div>
+            <div class="meta-item">
+              <div class="meta-item-label">&nbsp;</div>
+              <button class="button button--primary" id="review-load-button" type="button">Загрузить строки</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cards" id="review-summary-cards" style="display:none;">
+          <div class="card">
+            <div class="card-label">Всего строк</div>
+            <div class="card-value" id="review-total-rows">—</div>
+            <div class="card-hint">В этой партии импорта</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Подтверждено</div>
+            <div class="card-value" id="review-confirmed-rows" style="color:var(--success);">—</div>
+            <div class="card-hint">Готовы к проводке</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Удалено</div>
+            <div class="card-value" id="review-deleted-rows" style="color:var(--danger);">—</div>
+            <div class="card-hint">Исключены из проводки</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Валидных / с ошибками</div>
+            <div class="card-value" id="review-valid-invalid-rows">—</div>
+            <div class="card-hint">Результат проверки при загрузке</div>
+          </div>
+        </div>
+
+        <div class="panel" id="review-actions-panel" style="display:none;">
+          <div class="topbar-actions" style="justify-content:flex-start; gap:12px;">
+            <button class="button button--secondary" id="review-confirm-selected-button" type="button">Подтвердить выбранные</button>
+            <button class="button button--primary" id="review-post-batch-button" type="button">Провести батч в ДДС</button>
+          </div>
+          <div class="meta-item" style="margin-top:12px;">
+            <div class="meta-item-label">Результат последнего действия</div>
+            <div class="meta-item-value" id="review-action-result">—</div>
+          </div>
+        </div>
+
+        <div class="panel" id="review-table-panel" style="display:none;">
+          <h2 class="panel-title">Строки партии</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="review-select-all"></th>
+                  <th>№</th>
+                  <th>Дата</th>
+                  <th>Тип</th>
+                  <th>Сумма</th>
+                  <th>Контрагент</th>
+                  <th>Назначение</th>
+                  <th>Статья</th>
+                  <th>Проект</th>
+                  <th>Статус проверки</th>
+                  <th>Подтверждена</th>
+                  <th>Удалена</th>
+                </tr>
+              </thead>
+              <tbody id="review-table-body">
+                <tr><td colspan="12">Укажите партию импорта и нажмите «Загрузить строки»</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -433,6 +514,7 @@ const screenConfig = {
   pnl: { title: "ОПиУ", subtitle: "Отчёт о прибылях и убытках." },
   cashflow: { title: "ДДС", subtitle: "Каркас отчёта по движению денежных средств." },
   imports: { title: "Импорт данных", subtitle: "Загрузка выписок и подключение CRM." },
+  review: { title: "Проверка импорта", subtitle: "Редактирование строк и проводка батча в ДДС." },
   validation: { title: "Проверки", subtitle: "Контроль качества данных." },
   settings: { title: "Настройки", subtitle: "Параметры окружения и базы данных." }
 };
@@ -591,6 +673,13 @@ async function uploadBankStatement() {
     document.getElementById('import-invalid-rows').textContent = data.invalid_rows;
     summaryCards.style.display = 'grid';
 
+    document.getElementById('import-goto-review-button').style.display = 'inline-flex';
+    document.getElementById('import-goto-review-button').onclick = () => {
+      document.getElementById('review-batch-input').value = data.import_batch;
+      showScreen('review');
+      loadReviewRows();
+    };
+
     if (data.preview && data.preview.length > 0) {
       previewBody.innerHTML = data.preview.map(row => `
         <tr>
@@ -615,6 +704,179 @@ async function uploadBankStatement() {
   }
 }
 
+let reviewCurrentRows = [];
+
+function directionLabel(direction) {
+  return direction === 'inflow' ? 'Поступление' : (direction === 'outflow' ? 'Расход' : (direction ?? '—'));
+}
+
+function yesNoLabel(value) {
+  return value === 'yes' ? 'Да' : (value === 'no' ? 'Нет' : (value ?? '—'));
+}
+
+function renderReviewTable(rows) {
+  const tableBody = document.getElementById('review-table-body');
+
+  if (!rows || rows.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="12">В этой партии строк не найдено</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = rows.map(row => `
+    <tr data-row-id="${row.id}">
+      <td><input type="checkbox" class="review-row-checkbox" data-row-id="${row.id}" ${row.is_deleted === 'yes' ? 'disabled' : ''}></td>
+      <td>${row.id}</td>
+      <td>${row.operation_datetime ? new Date(row.operation_datetime).toLocaleDateString('ru-RU') : '—'}</td>
+      <td>${directionLabel(row.direction)}</td>
+      <td>${row.amount != null ? Number(row.amount).toLocaleString('ru-RU') + ' ₽' : '—'}</td>
+      <td>${row.counterparty_name ?? '—'}</td>
+      <td>${(row.payment_purpose ?? '').slice(0, 60)}</td>
+      <td><input type="text" class="field-input review-article-input" data-row-id="${row.id}" value="${row.article ?? ''}" placeholder="статья"></td>
+      <td><input type="text" class="field-input review-project-input" data-row-id="${row.id}" value="${row.project ?? ''}" placeholder="проект"></td>
+      <td style="color:${row.validation_status === 'valid' ? 'var(--success)' : 'var(--danger)'};">${row.validation_status ?? '—'}${row.validation_message ? ' — ' + row.validation_message : ''}</td>
+      <td>${yesNoLabel(row.is_confirmed)}</td>
+      <td>${yesNoLabel(row.is_deleted)}</td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('.review-article-input, .review-project-input').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const rowId = e.target.dataset.rowId;
+      const field = e.target.classList.contains('review-article-input') ? 'article' : 'project';
+      await patchReviewRow(rowId, { [field]: e.target.value });
+    });
+  });
+}
+
+async function patchReviewRow(rowId, payload) {
+  const resultText = document.getElementById('review-action-result');
+  try {
+    const response = await fetch(`/api/v1/bank-statement-review/rows/${rowId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
+    }
+    resultText.textContent = `Строка ${rowId} обновлена`;
+  } catch (error) {
+    resultText.textContent = 'Ошибка обновления строки: ' + error.message;
+    console.error('Ошибка PATCH строки', error);
+  }
+}
+
+async function loadReviewSummary(importBatch) {
+  const cards = document.getElementById('review-summary-cards');
+  try {
+    const response = await fetch(`/api/v1/bank-statement-review/summary?import_batch=${encodeURIComponent(importBatch)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const summary = await response.json();
+
+    document.getElementById('review-total-rows').textContent = summary.total_rows;
+    document.getElementById('review-confirmed-rows').textContent = summary.confirmed_rows;
+    document.getElementById('review-deleted-rows').textContent = summary.deleted_rows;
+    document.getElementById('review-valid-invalid-rows').textContent = `${summary.valid_rows} / ${summary.invalid_rows}`;
+    cards.style.display = 'grid';
+  } catch (error) {
+    console.error('Ошибка загрузки сводки батча', error);
+  }
+}
+
+async function loadReviewRows() {
+  const importBatch = document.getElementById('review-batch-input').value.trim();
+  const tableBody = document.getElementById('review-table-body');
+  const tablePanel = document.getElementById('review-table-panel');
+  const actionsPanel = document.getElementById('review-actions-panel');
+
+  if (!importBatch) {
+    tableBody.innerHTML = '<tr><td colspan="12">Укажите партию импорта</td></tr>';
+    tablePanel.style.display = 'flex';
+    return;
+  }
+
+  tableBody.innerHTML = '<tr><td colspan="12">Загрузка...</td></tr>';
+  tablePanel.style.display = 'flex';
+
+  try {
+    const response = await fetch(`/api/v1/bank-statement-review/rows?import_batch=${encodeURIComponent(importBatch)}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
+    }
+    const rows = await response.json();
+    reviewCurrentRows = rows;
+    renderReviewTable(rows);
+    actionsPanel.style.display = 'block';
+    await loadReviewSummary(importBatch);
+  } catch (error) {
+    tableBody.innerHTML = '<tr><td colspan="12">Ошибка загрузки строк: ' + error.message + '</td></tr>';
+    console.error('Ошибка загрузки строк батча', error);
+  }
+}
+
+async function confirmSelectedRows() {
+  const resultText = document.getElementById('review-action-result');
+  const checkboxes = document.querySelectorAll('.review-row-checkbox:checked');
+  const rowIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.rowId, 10));
+
+  if (rowIds.length === 0) {
+    resultText.textContent = 'Выберите хотя бы одну строку';
+    return;
+  }
+
+  resultText.textContent = 'Подтверждение...';
+
+  try {
+    const response = await fetch('/api/v1/bank-statement-review/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ row_ids: rowIds })
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    resultText.textContent = data.message + ` (${data.affected_count} строк)`;
+    await loadReviewRows();
+  } catch (error) {
+    resultText.textContent = 'Ошибка подтверждения: ' + error.message;
+    console.error('Ошибка подтверждения строк', error);
+  }
+}
+
+async function postReviewBatch() {
+  const resultText = document.getElementById('review-action-result');
+  const importBatch = document.getElementById('review-batch-input').value.trim();
+
+  if (!importBatch) {
+    resultText.textContent = 'Укажите партию импорта';
+    return;
+  }
+
+  resultText.textContent = 'Проводка батча в ДДС...';
+
+  try {
+    const response = await fetch('/api/v1/bank-statement-review/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ import_batch: importBatch })
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    resultText.textContent = data.message + ` (${data.affected_count} строк проведено)`;
+    await loadReviewRows();
+  } catch (error) {
+    resultText.textContent = 'Ошибка проводки батча: ' + error.message;
+    console.error('Ошибка проводки батча', error);
+  }
+}
+
 navButtons.forEach(button => button.addEventListener('click', () => showScreen(button.dataset.screen)));
 checkApiButton.addEventListener('click', checkApiStatus);
 mobileToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
@@ -624,6 +886,12 @@ window.addEventListener('resize', () => {
 
 document.getElementById('cashflow-load-button').addEventListener('click', loadCashflowReport);
 document.getElementById('import-upload-button').addEventListener('click', uploadBankStatement);
+document.getElementById('review-load-button').addEventListener('click', loadReviewRows);
+document.getElementById('review-confirm-selected-button').addEventListener('click', confirmSelectedRows);
+document.getElementById('review-post-batch-button').addEventListener('click', postReviewBatch);
+document.getElementById('review-select-all').addEventListener('change', (e) => {
+  document.querySelectorAll('.review-row-checkbox:not(:disabled)').forEach(cb => { cb.checked = e.target.checked; });
+});
 
 async function init() {
   showScreen('dashboard');
