@@ -30,7 +30,7 @@
 }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; min-height:100%; font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-body { overflow: hidden; }
+body { overflow-y: auto; }
 .app { display:grid; grid-template-columns: 280px 1fr; min-height:100vh; }
 .sidebar { background: var(--sidebar-bg); color: var(--sidebar-text); padding:24px 18px; display:flex; flex-direction:column; gap:24px; border-right:1px solid rgba(255,255,255,0.06); }
 .brand { display:flex; flex-direction:column; gap:8px; padding:6px 8px 14px; border-bottom:1px solid rgba(255,255,255,0.08); }
@@ -59,7 +59,7 @@ body { overflow: hidden; }
 .button--primary:hover { background: var(--primary-dark); }
 .button--secondary { background: var(--surface); border:1px solid var(--border); color: var(--text); }
 .button--secondary:hover { background: var(--surface-soft); }
-.content { padding:24px 28px 32px; overflow:auto; display:flex; flex-direction:column; gap:24px; }
+.content { padding:24px 28px 32px; overflow:visible; display:flex; flex-direction:column; gap:24px; }
 .cards { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:18px; }
 .card { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding:20px; }
 .card-label { font-size:13px; color: var(--muted); margin-bottom:10px; }
@@ -426,6 +426,7 @@ td { color:#374151; }
 
         <div class="panel" id="review-table-panel" style="display:none;">
           <h2 class="panel-title">Строки партии</h2>
+          <p class="panel-text" style="margin-bottom:12px;">Поле «Раздел ДДС (Проект)» определяет, в какой блок отчёта ДДС попадёт операция при проводке: Операционная — обычная деятельность (выручка, ЗП, аренда и т.д.), Инвестиционная — покупка/продажа активов, Финансовая — кредиты, займы, дивиденды, Перевод — движение между своими счетами (не искажает оборот). Кнопка «Удалить» помечает строку как исключённую — она не будет учтена при проводке в ДДС, но останется в базе для истории.</p>
           <div class="table-wrap">
             <table>
               <thead>
@@ -438,10 +439,10 @@ td { color:#374151; }
                   <th>Контрагент</th>
                   <th>Назначение</th>
                   <th>Статья</th>
-                  <th>Проект</th>
+                  <th title="Раздел ДДС: operating (операционная деятельность), investing (инвестиционная), financing (финансовая), transfer (перевод между своими счетами). Определяет, в какой блок отчёта ДДС попадёт операция.">Раздел ДДС (Проект) ⓘ</th>
                   <th>Статус проверки</th>
                   <th>Подтверждена</th>
-                  <th>Удалена</th>
+                  <th>Действия</th>
                 </tr>
               </thead>
               <tbody id="review-table-body">
@@ -537,6 +538,10 @@ function showScreen(screenName) {
   pageTitle.textContent = screenConfig[screenName].title;
   pageSubtitle.textContent = screenConfig[screenName].subtitle;
   if (window.innerWidth <= 920) sidebar.classList.remove('open');
+  if (screenName === 'cashflow') {
+    setDefaultCashflowDates();
+    loadCashflowReport();
+  }
 }
 
 async function checkApiStatus() {
@@ -714,6 +719,14 @@ function yesNoLabel(value) {
   return value === 'yes' ? 'Да' : (value === 'no' ? 'Нет' : (value ?? '—'));
 }
 
+const DDS_SECTIONS = [
+  { value: '', label: '— не задано —' },
+  { value: 'operating', label: 'Операционная' },
+  { value: 'investing', label: 'Инвестиционная' },
+  { value: 'financing', label: 'Финансовая' },
+  { value: 'transfer', label: 'Перевод между своими счетами' },
+];
+
 function renderReviewTable(rows) {
   const tableBody = document.getElementById('review-table-body');
 
@@ -722,28 +735,54 @@ function renderReviewTable(rows) {
     return;
   }
 
-  tableBody.innerHTML = rows.map(row => `
-    <tr data-row-id="${row.id}">
-      <td><input type="checkbox" class="review-row-checkbox" data-row-id="${row.id}" ${row.is_deleted === 'yes' ? 'disabled' : ''}></td>
+  tableBody.innerHTML = rows.map(row => {
+    const isDeleted = row.is_deleted === 'yes';
+    const sectionOptions = DDS_SECTIONS.map(opt =>
+      `<option value="${opt.value}" ${row.project === opt.value ? 'selected' : ''}>${opt.label}</option>`
+    ).join('');
+
+    return `
+    <tr data-row-id="${row.id}" style="${isDeleted ? 'opacity:0.45;' : ''}">
+      <td><input type="checkbox" class="review-row-checkbox" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}></td>
       <td>${row.id}</td>
       <td>${row.operation_datetime ? new Date(row.operation_datetime).toLocaleDateString('ru-RU') : '—'}</td>
       <td>${directionLabel(row.direction)}</td>
       <td>${row.amount != null ? Number(row.amount).toLocaleString('ru-RU') + ' ₽' : '—'}</td>
       <td>${row.counterparty_name ?? '—'}</td>
       <td>${(row.payment_purpose ?? '').slice(0, 60)}</td>
-      <td><input type="text" class="field-input review-article-input" data-row-id="${row.id}" value="${row.article ?? ''}" placeholder="статья"></td>
-      <td><input type="text" class="field-input review-project-input" data-row-id="${row.id}" value="${row.project ?? ''}" placeholder="проект"></td>
+      <td><input type="text" class="field-input review-article-input" data-row-id="${row.id}" value="${row.article ?? ''}" placeholder="статья" ${isDeleted ? 'disabled' : ''}></td>
+      <td><select class="field-input review-project-select" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}>${sectionOptions}</select></td>
       <td style="color:${row.validation_status === 'valid' ? 'var(--success)' : 'var(--danger)'};">${row.validation_status ?? '—'}${row.validation_message ? ' — ' + row.validation_message : ''}</td>
       <td>${yesNoLabel(row.is_confirmed)}</td>
-      <td>${yesNoLabel(row.is_deleted)}</td>
+      <td>
+        <button class="button button--secondary review-toggle-delete-button" data-row-id="${row.id}" data-deleted="${isDeleted}" type="button" style="padding:6px 10px; font-size:13px;">
+          ${isDeleted ? 'Восстановить' : 'Удалить'}
+        </button>
+      </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
-  document.querySelectorAll('.review-article-input, .review-project-input').forEach(input => {
+  document.querySelectorAll('.review-article-input').forEach(input => {
     input.addEventListener('change', async (e) => {
       const rowId = e.target.dataset.rowId;
-      const field = e.target.classList.contains('review-article-input') ? 'article' : 'project';
-      await patchReviewRow(rowId, { [field]: e.target.value });
+      await patchReviewRow(rowId, { article: e.target.value });
+    });
+  });
+
+  document.querySelectorAll('.review-project-select').forEach(select => {
+    select.addEventListener('change', async (e) => {
+      const rowId = e.target.dataset.rowId;
+      await patchReviewRow(rowId, { project: e.target.value });
+    });
+  });
+
+  document.querySelectorAll('.review-toggle-delete-button').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const rowId = e.target.dataset.rowId;
+      const currentlyDeleted = e.target.dataset.deleted === 'true';
+      await patchReviewRow(rowId, { is_deleted: currentlyDeleted ? 'no' : 'yes' });
+      await loadReviewRows();
     });
   });
 }
@@ -893,8 +932,16 @@ document.getElementById('review-select-all').addEventListener('change', (e) => {
   document.querySelectorAll('.review-row-checkbox:not(:disabled)').forEach(cb => { cb.checked = e.target.checked; });
 });
 
+function setDefaultCashflowDates() {
+  const dateFromInput = document.getElementById('cashflow-date-from');
+  const dateToInput = document.getElementById('cashflow-date-to');
+  if (dateFromInput && !dateFromInput.value) dateFromInput.value = '2020-01-01';
+  if (dateToInput && !dateToInput.value) dateToInput.value = new Date().toISOString().slice(0, 10);
+}
+
 async function init() {
   showScreen('dashboard');
+  setDefaultCashflowDates();
   await loadSettingsInfo();
   await checkApiStatus();
 }
