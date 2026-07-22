@@ -1,143 +1,81 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from datetime import datetime
+from decimal import Decimal
+from typing import Optional
 
-from backend.app.db.session import get_db
-from backend.app.models.cashflow_operation import CashflowOperation
-from backend.app.schemas.bank_statement_review import (
-    BankStatementBatchSummary,
-    BankStatementRowRead,
-    BankStatementRowUpdate,
-    BatchActionResponse,
-    BatchConfirmRequest,
-    BatchPostRequest,
-    CashflowOperationRead,
-)
-from backend.app.services.bank_statement_posting_service import (
-    BankStatementPostingService,
-)
-from backend.app.services.bank_statement_review_service import (
-    BankStatementReviewService,
-)
-
-router = APIRouter(prefix="/bank-statement-review", tags=["Bank Statement Review"])
+from pydantic import BaseModel
 
 
-@router.get("/rows", response_model=list[BankStatementRowRead])
-def list_batch_rows(
-    import_batch: str = Query(..., description="Идентификатор батча импорта"),
-    confirmed_only: bool = Query(False),
-    unconfirmed_only: bool = Query(False),
-    active_only: bool = Query(False),
-    db: Session = Depends(get_db),
-):
-    service = BankStatementReviewService(db)
-    return service.get_rows_by_batch(
-        import_batch=import_batch,
-        confirmed_only=confirmed_only,
-        unconfirmed_only=unconfirmed_only,
-        active_only=active_only,
-    )
+class BankStatementRowRead(BaseModel):
+    id: int
+    import_batch: str | None = None
+    operation_datetime: datetime | None = None
+    account_number: str | None = None
+    account_type: str | None = None
+    direction: str | None = None
+    amount: Decimal | None = None
+    currency: str | None = None
+    counterparty_account: str | None = None
+    counterparty_name: str | None = None
+    bank_name: str | None = None
+    document_number: str | None = None
+    operation_code: str | None = None
+    payment_purpose: str | None = None
+    article: str | None = None
+    project: str | None = None
+    validation_status: str | None = None
+    validation_message: str | None = None
+    is_confirmed: str | None = None
+    is_deleted: str | None = None
+    source_file: str | None = None
+    source_sheet: str | None = None
+
+    model_config = {"from_attributes": True}
 
 
-@router.get("/summary", response_model=BankStatementBatchSummary)
-def get_batch_summary(
-    import_batch: str = Query(..., description="Идентификатор батча импорта"),
-    db: Session = Depends(get_db),
-):
-    service = BankStatementReviewService(db)
-    return service.get_batch_summary(import_batch)
+class BankStatementRowUpdate(BaseModel):
+    article: Optional[str] = None
+    project: Optional[str] = None
+    is_confirmed: Optional[str] = None
+    is_deleted: Optional[str] = None
 
 
-@router.get("/batches")
-def list_batches(db: Session = Depends(get_db)):
-    """
-    Список всех загруженных партий импорта (история выписок).
-    Позволяет вернуться к любой ранее загруженной выписке и внести изменения —
-    ни одна партия не стирается при загрузке новой.
-    """
-    service = BankStatementReviewService(db)
-    return service.get_all_batches()
+class BatchConfirmRequest(BaseModel):
+    row_ids: list[int]
 
 
-@router.patch("/rows/{row_id}", response_model=BankStatementRowRead)
-def update_row(
-    row_id: int,
-    payload: BankStatementRowUpdate,
-    db: Session = Depends(get_db),
-):
-    service = BankStatementReviewService(db)
-    row = service.update_row(
-        row_id=row_id,
-        article=payload.article,
-        project=payload.project,
-        is_confirmed=payload.is_confirmed,
-        is_deleted=payload.is_deleted,
-    )
-
-    if not row:
-        raise HTTPException(status_code=404, detail="Строка не найдена")
-
-    return row
+class BatchPostRequest(BaseModel):
+    import_batch: str
 
 
-@router.post("/confirm", response_model=BatchActionResponse)
-def confirm_rows(
-    payload: BatchConfirmRequest,
-    db: Session = Depends(get_db),
-):
-    service = BankStatementReviewService(db)
-    updated = service.confirm_rows(payload.row_ids)
-
-    return BatchActionResponse(
-        status="ok",
-        message="Строки подтверждены",
-        affected_count=updated,
-    )
+class BatchActionResponse(BaseModel):
+    status: str
+    message: str
+    affected_count: int
 
 
-@router.post("/auto-classify", response_model=BatchActionResponse)
-def auto_classify_batch(
-    payload: BatchPostRequest,
-    db: Session = Depends(get_db),
-):
-    """
-    Автоматически проставляет статью и раздел ДДС для строк батча без статьи,
-    используя ключевые слова из справочника CashflowCategory.
-    """
-    service = BankStatementReviewService(db)
-    result = service.auto_classify_batch(payload.import_batch)
-
-    return BatchActionResponse(
-        status="ok",
-        message=(
-            f"Автоклассификация завершена: {result['classified']} строк распознано, "
-            f"{result['fallbacked']} — присвоена статья по умолчанию"
-        ),
-        affected_count=result["total"],
-    )
+class BankStatementBatchSummary(BaseModel):
+    import_batch: str
+    total_rows: int
+    confirmed_rows: int
+    deleted_rows: int
+    valid_rows: int
+    invalid_rows: int
 
 
-@router.post("/post", response_model=BatchActionResponse)
-def post_batch(
-    payload: BatchPostRequest,
-    db: Session = Depends(get_db),
-):
-    service = BankStatementPostingService(db)
-    result = service.post_confirmed_rows(payload.import_batch)
+class CashflowOperationRead(BaseModel):
+    id: int
+    operation_datetime: datetime
+    account_number: str
+    account_type: str
+    direction: str
+    amount: Decimal
+    currency: str
+    counterparty_name: str | None = None
+    payment_purpose: str | None = None
+    article: str | None = None
+    project: str | None = None
+    source_file: str | None = None
+    source_sheet: str | None = None
+    is_manual: str | None = None
 
-    return BatchActionResponse(
-        status="ok",
-        message=f"Батч {payload.import_batch} проведён",
-        affected_count=result["posted_rows"],
-    )
-
-
-@router.get("/cashflow-operations", response_model=list[CashflowOperationRead])
-def list_cashflow_operations(
-    db: Session = Depends(get_db),
-):
-    return (
-        db.query(CashflowOperation)
-        .order_by(CashflowOperation.id.asc())
-        .all()
-    )
+    model_config = {"from_attributes": True}
