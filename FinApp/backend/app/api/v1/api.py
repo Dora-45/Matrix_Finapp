@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from backend.app.api.v1.routers import (
     bank_statement_review,
+    cashflow_categories,
     health,
     imports,
     manual_entry,
@@ -16,3 +17,4 @@ api_router.include_router(settings.router)
 api_router.include_router(reports.router)
 api_router.include_router(manual_entry.router)
 api_router.include_router(bank_statement_review.router)
+api_router.include_router(cashflow_categories.router)

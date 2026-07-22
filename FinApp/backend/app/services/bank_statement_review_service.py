@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from backend.app.models.bank_statement import BankStatementRow
+from backend.app.repositories.cashflow_category_repository import CashflowCategoryRepository
 
 
 class BankStatementReviewService:
@@ -101,3 +102,94 @@ class BankStatementReviewService:
             "valid_rows": valid_rows,
             "invalid_rows": invalid_rows,
         }
+
+    def get_all_batches(self) -> list[dict]:
+        """
+        Возвращает список всех партий импорта (историю выписок) с краткой сводкой.
+        Нужен для экрана 'История загруженных выписок' — чтобы вернуться к любой
+        ранее загруженной выписке и внести изменения, не теряя предыдущие партии.
+        Важно: старые выписки никогда не удаляются из базы при загрузке новой —
+        у каждой загрузки свой уникальный import_batch, поэтому история сохраняется
+        автоматически, этот метод просто делает её видимой в интерфейсе.
+        """
+        rows = self.db.query(BankStatementRow).all()
+
+        batches: dict[str, dict] = {}
+        for row in rows:
+            key = row.import_batch
+            if key not in batches:
+                batches[key] = {
+                    "import_batch": key,
+                    "source_file": row.source_file,
+                    "total_rows": 0,
+                    "confirmed_rows": 0,
+                    "deleted_rows": 0,
+                    "min_date": None,
+                    "max_date": None,
+                }
+
+            b = batches[key]
+            b["total_rows"] += 1
+            if row.is_confirmed == "yes":
+                b["confirmed_rows"] += 1
+            if row.is_deleted == "yes":
+                b["deleted_rows"] += 1
+
+            if row.operation_datetime:
+                if b["min_date"] is None or row.operation_datetime < b["min_date"]:
+                    b["min_date"] = row.operation_datetime
+                if b["max_date"] is None or row.operation_datetime > b["max_date"]:
+                    b["max_date"] = row.operation_datetime
+
+        result = list(batches.values())
+        result.sort(key=lambda b: b["max_date"] or "", reverse=True)
+        return result
+
+    def auto_classify_batch(self, import_batch: str) -> dict:
+        """
+        Автоматически подставляет статью (article) и раздел ДДС (project)
+        для строк батча без статьи, используя те же ключевые слова,
+        что заданы в справочнике CashflowCategory. Не трогает строки
+        с уже заполненной статьёй, чтобы не перезаписать ручные правки.
+        """
+        category_repo = CashflowCategoryRepository(self.db)
+        categories = category_repo.get_all_active()
+
+        rows = (
+            self.db.query(BankStatementRow)
+            .filter(BankStatementRow.import_batch == import_batch)
+            .filter(BankStatementRow.is_deleted != "yes")
+            .filter((BankStatementRow.article.is_(None)) | (BankStatementRow.article == ""))
+            .all()
+        )
+
+        classified = 0
+        fallbacked = 0
+
+        for row in rows:
+            purpose = (row.payment_purpose or "").lower()
+            counterparty = (row.counterparty_name or "").lower()
+            search_text = f"{purpose} {counterparty}"
+
+            matched = None
+            for cat in categories:
+                if cat.account_type_filter != "all" and row.account_type != cat.account_type_filter:
+                    continue
+                if cat.direction != row.direction:
+                    continue
+                keywords = [kw.strip().lower() for kw in cat.keywords.split(",") if kw.strip()]
+                if any(keyword in search_text for keyword in keywords):
+                    matched = cat
+                    break
+
+            if matched:
+                row.article = matched.article
+                row.project = matched.section
+                classified += 1
+            else:
+                row.article = "Прочие поступления" if row.direction == "inflow" else "Прочие расходы"
+                row.project = "operating"
+                fallbacked += 1
+
+        self.db.commit()
+        return {"classified": classified, "fallbacked": fallbacked, "total": len(rows)}

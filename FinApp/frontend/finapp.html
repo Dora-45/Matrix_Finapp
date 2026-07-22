@@ -66,13 +66,13 @@ body { overflow-y: auto; }
 .card-value { font-size:28px; font-weight:800; letter-spacing:-0.03em; margin-bottom:8px; }
 .card-hint { font-size:13px; color: var(--muted); line-height:1.5; }
 .layout-grid { display:grid; grid-template-columns: 1.5fr 1fr; gap:20px; }
-.panel { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding:20px; }
+.panel { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding:20px; min-width:0; max-width:100%; }
 .panel-title { margin:0 0 10px; font-size:18px; font-weight:800; }
 .panel-text { margin:0; color: var(--muted); line-height:1.6; font-size:14px; }
 .panel-list { margin:16px 0 0; padding-left:18px; color: var(--text); line-height:1.7; font-size:14px; }
-.screen { display:none; flex-direction:column; gap:24px; }
+.screen { display:none; flex-direction:column; gap:24px; min-width:0; }
 .screen.active { display:flex; }
-.table-wrap { overflow:auto; border:1px solid var(--border); border-radius:14px; }
+.table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:14px; max-width:100%; }
 table { width:100%; border-collapse:collapse; background: var(--surface); }
 thead { background: var(--surface-soft); }
 th, td { padding:14px 16px; text-align:left; border-bottom:1px solid var(--border); font-size:14px; vertical-align:top; }
@@ -376,7 +376,7 @@ td { color:#374151; }
       <div class="screen" id="screen-review">
         <div class="panel">
           <h2 class="panel-title">Проверка и проводка импортированных строк</h2>
-          <p class="panel-text">Введите идентификатор партии импорта (получен на экране «Импорт данных»), отредактируйте статьи, подтвердите строки и проведите их в ДДС.</p>
+          <p class="panel-text">Введите идентификатор партии импорта (получен на экране «Импорт данных») или выберите её в истории ниже, отредактируйте статьи, подтвердите строки и проведите их в ДДС.</p>
 
           <div class="meta-grid" style="margin-top:16px;">
             <div class="meta-item">
@@ -387,6 +387,28 @@ td { color:#374151; }
               <div class="meta-item-label">&nbsp;</div>
               <button class="button button--primary" id="review-load-button" type="button">Загрузить строки</button>
             </div>
+          </div>
+        </div>
+
+        <div class="panel" id="review-history-panel">
+          <h2 class="panel-title">История загруженных выписок</h2>
+          <p class="panel-text" style="margin-bottom:12px;">Нажмите «Открыть», чтобы вернуться к любой партии и внести изменения. Старые выписки не удаляются при загрузке новой — все партии сохраняются в базе.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Файл</th>
+                  <th>Период</th>
+                  <th>Строк всего</th>
+                  <th>Подтверждено</th>
+                  <th>Удалено</th>
+                  <th>Действие</th>
+                </tr>
+              </thead>
+              <tbody id="review-history-body">
+                <tr><td colspan="6">Загрузка истории...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -415,6 +437,7 @@ td { color:#374151; }
 
         <div class="panel" id="review-actions-panel" style="display:none;">
           <div class="topbar-actions" style="justify-content:flex-start; gap:12px;">
+            <button class="button button--secondary" id="review-autoclassify-button" type="button">Автоматически определить статьи</button>
             <button class="button button--secondary" id="review-confirm-selected-button" type="button">Подтвердить выбранные</button>
             <button class="button button--primary" id="review-post-batch-button" type="button">Провести батч в ДДС</button>
           </div>
@@ -426,7 +449,11 @@ td { color:#374151; }
 
         <div class="panel" id="review-table-panel" style="display:none;">
           <h2 class="panel-title">Строки партии</h2>
-          <p class="panel-text" style="margin-bottom:12px;">Поле «Раздел ДДС (Проект)» определяет, в какой блок отчёта ДДС попадёт операция при проводке: Операционная — обычная деятельность (выручка, ЗП, аренда и т.д.), Инвестиционная — покупка/продажа активов, Финансовая — кредиты, займы, дивиденды, Перевод — движение между своими счетами (не искажает оборот). Кнопка «Удалить» помечает строку как исключённую — она не будет учтена при проводке в ДДС, но останется в базе для истории.</p>
+          <details class="hint-box" style="margin-bottom:12px;">
+            <summary style="cursor:pointer; font-size:13px; font-weight:700; color:var(--muted);">ⓘ Что означают поля «Раздел ДДС» и кнопка «Удалить»?</summary>
+            <p class="panel-text" style="margin-top:8px; font-size:13px;">«Раздел ДДС (Проект)»: Операционная — обычная деятельность (выручка, ЗП, аренда), Инвестиционная — покупка/продажа активов, Финансовая — кредиты, займы, дивиденды, Перевод — движение между своими счетами. Кнопка «Удалить» исключает строку из проводки в ДДС, но не стирает её из базы. Статью можно выбрать из списка или ввести новую — список подставляется из справочника категорий.</p>
+          </details>
+          <datalist id="articles-datalist"></datalist>
           <div class="table-wrap">
             <table>
               <thead>
@@ -541,6 +568,10 @@ function showScreen(screenName) {
   if (screenName === 'cashflow') {
     setDefaultCashflowDates();
     loadCashflowReport();
+  }
+  if (screenName === 'review') {
+    loadBatchHistory();
+    if (cashflowArticlesList.length === 0) loadArticlesDatalist();
   }
 }
 
@@ -710,14 +741,7 @@ async function uploadBankStatement() {
 }
 
 let reviewCurrentRows = [];
-
-function directionLabel(direction) {
-  return direction === 'inflow' ? 'Поступление' : (direction === 'outflow' ? 'Расход' : (direction ?? '—'));
-}
-
-function yesNoLabel(value) {
-  return value === 'yes' ? 'Да' : (value === 'no' ? 'Нет' : (value ?? '—'));
-}
+let cashflowArticlesList = [];
 
 const DDS_SECTIONS = [
   { value: '', label: '— не задано —' },
@@ -726,6 +750,14 @@ const DDS_SECTIONS = [
   { value: 'financing', label: 'Финансовая' },
   { value: 'transfer', label: 'Перевод между своими счетами' },
 ];
+
+function directionLabel(direction) {
+  return direction === 'inflow' ? 'Поступление' : (direction === 'outflow' ? 'Расход' : (direction ?? '—'));
+}
+
+function yesNoLabel(value) {
+  return value === 'yes' ? 'Да' : (value === 'no' ? 'Нет' : (value ?? '—'));
+}
 
 function renderReviewTable(rows) {
   const tableBody = document.getElementById('review-table-body');
@@ -750,7 +782,9 @@ function renderReviewTable(rows) {
       <td>${row.amount != null ? Number(row.amount).toLocaleString('ru-RU') + ' ₽' : '—'}</td>
       <td>${row.counterparty_name ?? '—'}</td>
       <td>${(row.payment_purpose ?? '').slice(0, 60)}</td>
-      <td><input type="text" class="field-input review-article-input" data-row-id="${row.id}" value="${row.article ?? ''}" placeholder="статья" ${isDeleted ? 'disabled' : ''}></td>
+      <td>
+        <input type="text" class="field-input review-article-input" list="articles-datalist" data-row-id="${row.id}" value="${row.article ?? ''}" placeholder="выберите или введите статью" ${isDeleted ? 'disabled' : ''}>
+      </td>
       <td><select class="field-input review-project-select" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}>${sectionOptions}</select></td>
       <td style="color:${row.validation_status === 'valid' ? 'var(--success)' : 'var(--danger)'};">${row.validation_status ?? '—'}${row.validation_message ? ' — ' + row.validation_message : ''}</td>
       <td>${yesNoLabel(row.is_confirmed)}</td>
@@ -916,6 +950,98 @@ async function postReviewBatch() {
   }
 }
 
+async function loadArticlesDatalist() {
+  const datalist = document.getElementById('articles-datalist');
+  try {
+    const response = await fetch('/api/v1/cashflow-categories/articles');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    cashflowArticlesList = data.articles || [];
+    datalist.innerHTML = cashflowArticlesList.map(a => `<option value="${a}"></option>`).join('');
+  } catch (error) {
+    console.error('Ошибка загрузки списка статей', error);
+  }
+}
+
+async function loadBatchHistory() {
+  const historyBody = document.getElementById('review-history-body');
+  historyBody.innerHTML = '<tr><td colspan="6">Загрузка истории...</td></tr>';
+
+  try {
+    const response = await fetch('/api/v1/bank-statement-review/batches');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const batches = await response.json();
+
+    if (!batches || batches.length === 0) {
+      historyBody.innerHTML = '<tr><td colspan="6">Выписки ещё не загружались</td></tr>';
+      return;
+    }
+
+    historyBody.innerHTML = batches.map(b => {
+      const period = (b.min_date && b.max_date)
+        ? `${new Date(b.min_date).toLocaleDateString('ru-RU')} — ${new Date(b.max_date).toLocaleDateString('ru-RU')}`
+        : '—';
+      return `
+        <tr>
+          <td>${b.source_file ?? '—'}</td>
+          <td>${period}</td>
+          <td>${b.total_rows}</td>
+          <td style="color:var(--success);">${b.confirmed_rows}</td>
+          <td style="color:var(--danger);">${b.deleted_rows}</td>
+          <td><button class="button button--secondary review-open-batch-button" data-batch="${b.import_batch}" type="button" style="padding:6px 10px; font-size:13px;">Открыть</button></td>
+        </tr>
+      `;
+    }).join('');
+
+    document.querySelectorAll('.review-open-batch-button').forEach(button => {
+      button.addEventListener('click', () => {
+        document.getElementById('review-batch-input').value = button.dataset.batch;
+        loadReviewRows();
+      });
+    });
+  } catch (error) {
+    historyBody.innerHTML = '<tr><td colspan="6">Ошибка загрузки истории: ' + error.message + '</td></tr>';
+    console.error('Ошибка загрузки истории партий', error);
+  }
+}
+
+async function autoClassifyBatch() {
+  const resultText = document.getElementById('review-action-result');
+  const importBatch = document.getElementById('review-batch-input').value.trim();
+
+  if (!importBatch) {
+    resultText.textContent = 'Укажите партию импорта';
+    return;
+  }
+
+  resultText.textContent = 'Автоматическое определение статей...';
+
+  try {
+    const response = await fetch('/api/v1/bank-statement-review/auto-classify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ import_batch: importBatch })
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    resultText.textContent = data.message;
+    await loadReviewRows();
+  } catch (error) {
+    resultText.textContent = 'Ошибка автоклассификации: ' + error.message;
+    console.error('Ошибка автоклассификации', error);
+  }
+}
+
+function setDefaultCashflowDates() {
+  const dateFromInput = document.getElementById('cashflow-date-from');
+  const dateToInput = document.getElementById('cashflow-date-to');
+  if (dateFromInput && !dateFromInput.value) dateFromInput.value = '2020-01-01';
+  if (dateToInput && !dateToInput.value) dateToInput.value = new Date().toISOString().slice(0, 10);
+}
+
 navButtons.forEach(button => button.addEventListener('click', () => showScreen(button.dataset.screen)));
 checkApiButton.addEventListener('click', checkApiStatus);
 mobileToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
@@ -926,18 +1052,12 @@ window.addEventListener('resize', () => {
 document.getElementById('cashflow-load-button').addEventListener('click', loadCashflowReport);
 document.getElementById('import-upload-button').addEventListener('click', uploadBankStatement);
 document.getElementById('review-load-button').addEventListener('click', loadReviewRows);
+document.getElementById('review-autoclassify-button').addEventListener('click', autoClassifyBatch);
 document.getElementById('review-confirm-selected-button').addEventListener('click', confirmSelectedRows);
 document.getElementById('review-post-batch-button').addEventListener('click', postReviewBatch);
 document.getElementById('review-select-all').addEventListener('change', (e) => {
   document.querySelectorAll('.review-row-checkbox:not(:disabled)').forEach(cb => { cb.checked = e.target.checked; });
 });
-
-function setDefaultCashflowDates() {
-  const dateFromInput = document.getElementById('cashflow-date-from');
-  const dateToInput = document.getElementById('cashflow-date-to');
-  if (dateFromInput && !dateFromInput.value) dateFromInput.value = '2020-01-01';
-  if (dateToInput && !dateToInput.value) dateToInput.value = new Date().toISOString().slice(0, 10);
-}
 
 async function init() {
   showScreen('dashboard');
