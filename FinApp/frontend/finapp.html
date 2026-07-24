@@ -30,13 +30,13 @@
 }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; min-height:100%; font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-body { overflow-y: auto; }
+body { overflow: hidden; }
 .app { display:grid; grid-template-columns: 280px 1fr; min-height:100vh; }
 .sidebar { background: var(--sidebar-bg); color: var(--sidebar-text); padding:24px 18px; display:flex; flex-direction:column; gap:24px; border-right:1px solid rgba(255,255,255,0.06); }
 .brand { display:flex; flex-direction:column; gap:8px; padding:6px 8px 14px; border-bottom:1px solid rgba(255,255,255,0.08); }
 .brand-title { font-size:24px; font-weight:800; letter-spacing:-0.02em; }
 .brand-subtitle { font-size:13px; color: var(--sidebar-muted); line-height:1.5; }
-.nav { display:flex; flex-direction:column; gap:8px; }
+.nav { display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
 .nav-section-title { font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color: var(--sidebar-muted); margin:10px 10px 4px; }
 .nav-button { width:100%; border:none; background:transparent; color: var(--sidebar-text); padding:14px 14px; border-radius:12px; text-align:left; cursor:pointer; font-size:15px; font-weight:600; transition:0.2s ease; }
 .nav-button:hover { background: rgba(255,255,255,0.06); }
@@ -59,24 +59,27 @@ body { overflow-y: auto; }
 .button--primary:hover { background: var(--primary-dark); }
 .button--secondary { background: var(--surface); border:1px solid var(--border); color: var(--text); }
 .button--secondary:hover { background: var(--surface-soft); }
-.content { padding:24px 28px 32px; overflow:visible; display:flex; flex-direction:column; gap:24px; }
+.button--ghost { background:transparent; border:1px solid var(--border); color: var(--danger); padding:8px 12px; font-size:13px; }
+.button--ghost:hover { background: #fef2f2; }
+.button--ghost:disabled { opacity:0.4; cursor:not-allowed; }
+.content { padding:24px 28px 32px; overflow:auto; display:flex; flex-direction:column; gap:24px; }
 .cards { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:18px; }
 .card { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding:20px; }
 .card-label { font-size:13px; color: var(--muted); margin-bottom:10px; }
 .card-value { font-size:28px; font-weight:800; letter-spacing:-0.03em; margin-bottom:8px; }
 .card-hint { font-size:13px; color: var(--muted); line-height:1.5; }
 .layout-grid { display:grid; grid-template-columns: 1.5fr 1fr; gap:20px; }
-.panel { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding:20px; min-width:0; max-width:100%; }
+.panel { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding:20px; }
 .panel-title { margin:0 0 10px; font-size:18px; font-weight:800; }
 .panel-text { margin:0; color: var(--muted); line-height:1.6; font-size:14px; }
 .panel-list { margin:16px 0 0; padding-left:18px; color: var(--text); line-height:1.7; font-size:14px; }
-.screen { display:none; flex-direction:column; gap:24px; min-width:0; }
+.screen { display:none; flex-direction:column; gap:24px; }
 .screen.active { display:flex; }
-.table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:14px; max-width:100%; }
+.table-wrap { overflow:auto; border:1px solid var(--border); border-radius:14px; }
 table { width:100%; border-collapse:collapse; background: var(--surface); }
 thead { background: var(--surface-soft); }
 th, td { padding:14px 16px; text-align:left; border-bottom:1px solid var(--border); font-size:14px; vertical-align:top; }
-th { font-weight:700; color: var(--text); }
+th { font-weight:700; color: var(--text); white-space:nowrap; }
 td { color:#374151; }
 .empty-box { border:2px dashed var(--border); border-radius:16px; padding:28px; background:#fbfdff; }
 .empty-box-title { margin:0 0 8px; font-size:18px; font-weight:800; }
@@ -91,6 +94,26 @@ td { color:#374151; }
 .meta-item-value { font-size:15px; font-weight:700; line-height:1.5; }
 .mobile-toggle { display:none; }
 .field-input { width:100%; border:1px solid var(--border); border-radius:8px; padding:8px; font-size:14px; }
+.table-input { width:100%; min-width:90px; border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:13px; background:var(--surface); }
+.table-select { width:100%; min-width:110px; border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:13px; background:var(--surface); }
+.table-input:disabled, .table-select:disabled { background: var(--surface-soft); color: var(--muted); cursor:not-allowed; }
+.row-deleted td { opacity:0.45; }
+.toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+.action-note { font-size:13px; color: var(--muted); margin-top:6px; }
+.batch-list { display:flex; flex-direction:column; gap:10px; }
+.batch-item { display:flex; justify-content:space-between; align-items:center; gap:12px; border:1px solid var(--border); border-radius:12px; padding:14px 16px; background: var(--surface); cursor:pointer; transition:0.15s ease; flex-wrap:wrap; }
+.batch-item:hover { border-color: var(--primary); background: var(--primary-soft); }
+.batch-item.active { border-color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
+.batch-item-main { display:flex; flex-direction:column; gap:4px; }
+.batch-item-file { font-weight:700; font-size:14px; }
+.batch-item-meta { font-size:13px; color: var(--muted); }
+.batch-item-stats { display:flex; gap:14px; font-size:13px; color: var(--muted); flex-wrap:wrap; }
+.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+.badge--success { background:#dcfce7; color: var(--success); }
+.badge--warning { background:#fef3c7; color: var(--warning); }
+form.manual-form { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:16px; }
+form.manual-form .full-width { grid-column: 1 / -1; }
+.field-label { font-size:13px; font-weight:700; color: var(--text); margin-bottom:6px; display:block; }
 @media (max-width: 1200px) {
   .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .layout-grid { grid-template-columns: 1fr; }
@@ -105,6 +128,7 @@ td { color:#374151; }
   .topbar { padding:16px 18px; }
   .content { padding:18px; }
   .cards, .meta-grid { grid-template-columns: 1fr; }
+  form.manual-form { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -123,6 +147,7 @@ td { color:#374151; }
       <div class="nav-section-title">Данные</div>
       <button class="nav-button" data-screen="imports">Импорт данных</button>
       <button class="nav-button" data-screen="review">Проверка импорта</button>
+      <button class="nav-button" data-screen="manual">Ручной ввод</button>
       <button class="nav-button" data-screen="validation">Проверки</button>
       <div class="nav-section-title">Система</div>
       <button class="nav-button" data-screen="settings">Настройки</button>
@@ -329,7 +354,6 @@ td { color:#374151; }
               <div class="meta-item-value" id="import-batch-text">—</div>
             </div>
           </div>
-          <button class="button button--secondary" id="import-goto-review-button" type="button" style="display:none; margin-top:12px;">Перейти к проверке строк</button>
 
           <div class="cards" id="import-summary-cards" style="display:none;">
             <div class="card">
@@ -370,91 +394,44 @@ td { color:#374151; }
             </table>
           </div>
         </div>
+
+        <div class="panel">
+          <p class="action-note">После загрузки перейдите в раздел «Проверка импорта», чтобы разнести статьи, проверить типы счетов и провести операции в ДДС.</p>
+        </div>
       </div>
 
       <!-- ПРОВЕРКА ИМПОРТА -->
       <div class="screen" id="screen-review">
         <div class="panel">
-          <h2 class="panel-title">Проверка и проводка импортированных строк</h2>
-          <p class="panel-text">Введите идентификатор партии импорта (получен на экране «Импорт данных») или выберите её в истории ниже, отредактируйте статьи, подтвердите строки и проведите их в ДДС.</p>
-
-          <div class="meta-grid" style="margin-top:16px;">
-            <div class="meta-item">
-              <div class="meta-item-label">Партия импорта</div>
-              <input type="text" id="review-batch-input" class="field-input" placeholder="например, 3f2a1c9e-...">
-            </div>
-            <div class="meta-item">
-              <div class="meta-item-label">&nbsp;</div>
-              <button class="button button--primary" id="review-load-button" type="button">Загрузить строки</button>
+          <h2 class="panel-title">История загрузок</h2>
+          <p class="panel-text">Все ранее загруженные партии выписок. Выберите партию, чтобы проверить и разнести строки по статьям.</p>
+          <div class="batch-list" id="review-batch-list" style="margin-top:16px;">
+            <div class="empty-box">
+              <div class="empty-box-title">История пуста</div>
+              <p class="empty-box-text">Загрузите выписку на экране «Импорт данных» — она появится здесь.</p>
             </div>
           </div>
         </div>
 
-        <div class="panel" id="review-history-panel">
-          <h2 class="panel-title">История загруженных выписок</h2>
-          <p class="panel-text" style="margin-bottom:12px;">Нажмите «Открыть», чтобы вернуться к любой партии и внести изменения. Старые выписки не удаляются при загрузке новой — все партии сохраняются в базе.</p>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Файл</th>
-                  <th>Период</th>
-                  <th>Строк всего</th>
-                  <th>Подтверждено</th>
-                  <th>Удалено</th>
-                  <th>Действие</th>
-                </tr>
-              </thead>
-              <tbody id="review-history-body">
-                <tr><td colspan="6">Загрузка истории...</td></tr>
-              </tbody>
-            </table>
+        <div class="panel" id="review-detail-panel" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h2 class="panel-title" style="margin-bottom:4px;">Строки партии</h2>
+              <p class="panel-text" id="review-batch-label">—</p>
+            </div>
+            <div class="toolbar">
+              <button class="button button--secondary" id="review-autoclassify-button" type="button">Автоматически определить статьи</button>
+              <button class="button button--secondary" id="review-confirm-selected-button" type="button">Подтвердить выбранные</button>
+              <button class="button button--primary" id="review-post-button" type="button">Провести батч в ДДС</button>
+            </div>
           </div>
-        </div>
 
-        <div class="cards" id="review-summary-cards" style="display:none;">
-          <div class="card">
-            <div class="card-label">Всего строк</div>
-            <div class="card-value" id="review-total-rows">—</div>
-            <div class="card-hint">В этой партии импорта</div>
-          </div>
-          <div class="card">
-            <div class="card-label">Подтверждено</div>
-            <div class="card-value" id="review-confirmed-rows" style="color:var(--success);">—</div>
-            <div class="card-hint">Готовы к проводке</div>
-          </div>
-          <div class="card">
-            <div class="card-label">Удалено</div>
-            <div class="card-value" id="review-deleted-rows" style="color:var(--danger);">—</div>
-            <div class="card-hint">Исключены из проводки</div>
-          </div>
-          <div class="card">
-            <div class="card-label">Валидных / с ошибками</div>
-            <div class="card-value" id="review-valid-invalid-rows">—</div>
-            <div class="card-hint">Результат проверки при загрузке</div>
-          </div>
-        </div>
-
-        <div class="panel" id="review-actions-panel" style="display:none;">
-          <div class="topbar-actions" style="justify-content:flex-start; gap:12px;">
-            <button class="button button--secondary" id="review-autoclassify-button" type="button">Автоматически определить статьи</button>
-            <button class="button button--secondary" id="review-confirm-selected-button" type="button">Подтвердить выбранные</button>
-            <button class="button button--primary" id="review-post-batch-button" type="button">Провести батч в ДДС</button>
-          </div>
-          <div class="meta-item" style="margin-top:12px;">
+          <div class="meta-item" id="review-action-result" style="margin-top:16px;display:none;">
             <div class="meta-item-label">Результат последнего действия</div>
-            <div class="meta-item-value" id="review-action-result">—</div>
+            <div class="meta-item-value" id="review-action-result-text">—</div>
           </div>
-        </div>
 
-        <div class="panel" id="review-table-panel" style="display:none;">
-          <h2 class="panel-title">Строки партии</h2>
-          <details class="hint-box" style="margin-bottom:12px;">
-            <summary style="cursor:pointer; font-size:13px; font-weight:700; color:var(--muted);">ⓘ Что означают поля «Раздел ДДС» и кнопка «Удалить»?</summary>
-            <p class="panel-text" style="margin-top:8px; font-size:13px;">«Раздел ДДС (Проект)»: Операционная — обычная деятельность (выручка, ЗП, аренда), Инвестиционная — покупка/продажа активов, Финансовая — кредиты, займы, дивиденды, Перевод — движение между своими счетами. Кнопка «Удалить» исключает строку из проводки в ДДС, но не стирает её из базы. Статью можно выбрать из списка или ввести новую — список подставляется из справочника категорий.</p>
-          </details>
-          <datalist id="articles-datalist"></datalist>
-          <div class="table-wrap">
+          <div class="table-wrap" style="margin-top:16px;">
             <table>
               <thead>
                 <tr>
@@ -466,14 +443,84 @@ td { color:#374151; }
                   <th>Контрагент</th>
                   <th>Назначение</th>
                   <th>Статья</th>
-                  <th title="Раздел ДДС: operating (операционная деятельность), investing (инвестиционная), financing (финансовая), transfer (перевод между своими счетами). Определяет, в какой блок отчёта ДДС попадёт операция.">Раздел ДДС (Проект) ⓘ</th>
+                  <th>Счёт</th>
                   <th>Статус проверки</th>
                   <th>Подтверждена</th>
                   <th>Действия</th>
                 </tr>
               </thead>
               <tbody id="review-table-body">
-                <tr><td colspan="12">Укажите партию импорта и нажмите «Загрузить строки»</td></tr>
+                <tr><td colspan="12">Выберите партию из истории выше</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- РУЧНОЙ ВВОД -->
+      <div class="screen" id="screen-manual">
+        <div class="panel">
+          <h2 class="panel-title">Ручной ввод операций</h2>
+          <p class="panel-text">Добавляйте операции, которые не приходят из банковской выписки — по умолчанию это личный счёт, но можно выбрать расчётный или кредитный.</p>
+
+          <form class="manual-form" id="manual-form" style="margin-top:16px;">
+            <div>
+              <label class="field-label" for="manual-date">Дата операции</label>
+              <input type="date" id="manual-date" class="field-input" required>
+            </div>
+            <div>
+              <label class="field-label" for="manual-direction">Тип операции</label>
+              <select id="manual-direction" class="field-input">
+                <option value="outflow">Расход</option>
+                <option value="inflow">Поступление</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="manual-amount">Сумма, ₽</label>
+              <input type="number" id="manual-amount" class="field-input" step="0.01" min="0.01" required>
+            </div>
+            <div>
+              <label class="field-label" for="manual-account-type">Счёт</label>
+              <select id="manual-account-type" class="field-input">
+                <option value="personal" selected>Личный</option>
+                <option value="checking">Расчётный</option>
+                <option value="credit">Кредитный</option>
+              </select>
+            </div>
+            <div class="full-width">
+              <label class="field-label" for="manual-purpose">Назначение платежа</label>
+              <input type="text" id="manual-purpose" class="field-input" required>
+            </div>
+            <div>
+              <label class="field-label" for="manual-counterparty">Контрагент</label>
+              <input type="text" id="manual-counterparty" class="field-input">
+            </div>
+            <div>
+              <label class="field-label" for="manual-article">Статья (необязательно)</label>
+              <input type="text" id="manual-article" class="field-input" placeholder="оставьте пустым для автоклассификации">
+            </div>
+            <div class="full-width">
+              <button class="button button--primary" type="submit">Добавить операцию</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">Ранее добавленные вручную</h2>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Тип</th>
+                  <th>Сумма</th>
+                  <th>Назначение</th>
+                  <th>Счёт</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="manual-operations-body">
+                <tr><td colspan="6">Записей пока нет</td></tr>
               </tbody>
             </table>
           </div>
@@ -540,12 +587,15 @@ td { color:#374151; }
 const screenConfig = {
   dashboard: { title: "Дашборд", subtitle: "Обзор ключевых показателей." },
   pnl: { title: "ОПиУ", subtitle: "Отчёт о прибылях и убытках." },
-  cashflow: { title: "ДДС", subtitle: "Каркас отчёта по движению денежных средств." },
+  cashflow: { title: "ДДС", subtitle: "Отчёт по движению денежных средств." },
   imports: { title: "Импорт данных", subtitle: "Загрузка выписок и подключение CRM." },
-  review: { title: "Проверка импорта", subtitle: "Редактирование строк и проводка батча в ДДС." },
+  review: { title: "Проверка импорта", subtitle: "История загрузок и разнесение статей." },
+  manual: { title: "Ручной ввод", subtitle: "Операции по личному счёту и корректировки." },
   validation: { title: "Проверки", subtitle: "Контроль качества данных." },
   settings: { title: "Настройки", subtitle: "Параметры окружения и базы данных." }
 };
+
+const ACCOUNT_TYPE_LABELS = { checking: 'Расчётный', credit: 'Кредитный', personal: 'Личный' };
 
 const navButtons = document.querySelectorAll('.nav-button');
 const screens = document.querySelectorAll('.screen');
@@ -559,20 +609,17 @@ const settingsEnv = document.getElementById('settings-env');
 const sidebar = document.getElementById('sidebar');
 const mobileToggle = document.getElementById('mobile-toggle');
 
+let activeBatchId = null;
+
 function showScreen(screenName) {
   navButtons.forEach(button => button.classList.toggle('active', button.dataset.screen === screenName));
   screens.forEach(screen => screen.classList.toggle('active', screen.id === `screen-${screenName}`));
   pageTitle.textContent = screenConfig[screenName].title;
   pageSubtitle.textContent = screenConfig[screenName].subtitle;
   if (window.innerWidth <= 920) sidebar.classList.remove('open');
-  if (screenName === 'cashflow') {
-    setDefaultCashflowDates();
-    loadCashflowReport();
-  }
-  if (screenName === 'review') {
-    loadBatchHistory();
-    if (cashflowArticlesList.length === 0) loadArticlesDatalist();
-  }
+
+  if (screenName === 'review') loadBatchHistory();
+  if (screenName === 'manual') loadManualOperationsList();
 }
 
 async function checkApiStatus() {
@@ -709,13 +756,6 @@ async function uploadBankStatement() {
     document.getElementById('import-invalid-rows').textContent = data.invalid_rows;
     summaryCards.style.display = 'grid';
 
-    document.getElementById('import-goto-review-button').style.display = 'inline-flex';
-    document.getElementById('import-goto-review-button').onclick = () => {
-      document.getElementById('review-batch-input').value = data.import_batch;
-      showScreen('review');
-      loadReviewRows();
-    };
-
     if (data.preview && data.preview.length > 0) {
       previewBody.innerHTML = data.preview.map(row => `
         <tr>
@@ -740,232 +780,11 @@ async function uploadBankStatement() {
   }
 }
 
-let reviewCurrentRows = [];
-let cashflowArticlesList = [];
-
-const DDS_SECTIONS = [
-  { value: '', label: '— не задано —' },
-  { value: 'operating', label: 'Операционная' },
-  { value: 'investing', label: 'Инвестиционная' },
-  { value: 'financing', label: 'Финансовая' },
-  { value: 'transfer', label: 'Перевод между своими счетами' },
-];
-
-function directionLabel(direction) {
-  return direction === 'inflow' ? 'Поступление' : (direction === 'outflow' ? 'Расход' : (direction ?? '—'));
-}
-
-function yesNoLabel(value) {
-  return value === 'yes' ? 'Да' : (value === 'no' ? 'Нет' : (value ?? '—'));
-}
-
-function renderReviewTable(rows) {
-  const tableBody = document.getElementById('review-table-body');
-
-  if (!rows || rows.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="12">В этой партии строк не найдено</td></tr>';
-    return;
-  }
-
-  tableBody.innerHTML = rows.map(row => {
-    const isDeleted = row.is_deleted === 'yes';
-    const sectionOptions = DDS_SECTIONS.map(opt =>
-      `<option value="${opt.value}" ${row.project === opt.value ? 'selected' : ''}>${opt.label}</option>`
-    ).join('');
-
-    return `
-    <tr data-row-id="${row.id}" style="${isDeleted ? 'opacity:0.45;' : ''}">
-      <td><input type="checkbox" class="review-row-checkbox" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}></td>
-      <td>${row.id}</td>
-      <td>${row.operation_datetime ? new Date(row.operation_datetime).toLocaleDateString('ru-RU') : '—'}</td>
-      <td>${directionLabel(row.direction)}</td>
-      <td>${row.amount != null ? Number(row.amount).toLocaleString('ru-RU') + ' ₽' : '—'}</td>
-      <td>${row.counterparty_name ?? '—'}</td>
-      <td>${(row.payment_purpose ?? '').slice(0, 60)}</td>
-      <td>
-        <input type="text" class="field-input review-article-input" list="articles-datalist" data-row-id="${row.id}" value="${row.article ?? ''}" placeholder="выберите или введите статью" ${isDeleted ? 'disabled' : ''}>
-      </td>
-      <td><select class="field-input review-project-select" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}>${sectionOptions}</select></td>
-      <td style="color:${row.validation_status === 'valid' ? 'var(--success)' : 'var(--danger)'};">${row.validation_status ?? '—'}${row.validation_message ? ' — ' + row.validation_message : ''}</td>
-      <td>${yesNoLabel(row.is_confirmed)}</td>
-      <td>
-        <button class="button button--secondary review-toggle-delete-button" data-row-id="${row.id}" data-deleted="${isDeleted}" type="button" style="padding:6px 10px; font-size:13px;">
-          ${isDeleted ? 'Восстановить' : 'Удалить'}
-        </button>
-      </td>
-    </tr>
-  `;
-  }).join('');
-
-  document.querySelectorAll('.review-article-input').forEach(input => {
-    input.addEventListener('change', async (e) => {
-      const rowId = e.target.dataset.rowId;
-      await patchReviewRow(rowId, { article: e.target.value });
-    });
-  });
-
-  document.querySelectorAll('.review-project-select').forEach(select => {
-    select.addEventListener('change', async (e) => {
-      const rowId = e.target.dataset.rowId;
-      await patchReviewRow(rowId, { project: e.target.value });
-    });
-  });
-
-  document.querySelectorAll('.review-toggle-delete-button').forEach(button => {
-    button.addEventListener('click', async (e) => {
-      const rowId = e.target.dataset.rowId;
-      const currentlyDeleted = e.target.dataset.deleted === 'true';
-      await patchReviewRow(rowId, { is_deleted: currentlyDeleted ? 'no' : 'yes' });
-      await loadReviewRows();
-    });
-  });
-}
-
-async function patchReviewRow(rowId, payload) {
-  const resultText = document.getElementById('review-action-result');
-  try {
-    const response = await fetch(`/api/v1/bank-statement-review/rows/${rowId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
-    }
-    resultText.textContent = `Строка ${rowId} обновлена`;
-  } catch (error) {
-    resultText.textContent = 'Ошибка обновления строки: ' + error.message;
-    console.error('Ошибка PATCH строки', error);
-  }
-}
-
-async function loadReviewSummary(importBatch) {
-  const cards = document.getElementById('review-summary-cards');
-  try {
-    const response = await fetch(`/api/v1/bank-statement-review/summary?import_batch=${encodeURIComponent(importBatch)}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const summary = await response.json();
-
-    document.getElementById('review-total-rows').textContent = summary.total_rows;
-    document.getElementById('review-confirmed-rows').textContent = summary.confirmed_rows;
-    document.getElementById('review-deleted-rows').textContent = summary.deleted_rows;
-    document.getElementById('review-valid-invalid-rows').textContent = `${summary.valid_rows} / ${summary.invalid_rows}`;
-    cards.style.display = 'grid';
-  } catch (error) {
-    console.error('Ошибка загрузки сводки батча', error);
-  }
-}
-
-async function loadReviewRows() {
-  const importBatch = document.getElementById('review-batch-input').value.trim();
-  const tableBody = document.getElementById('review-table-body');
-  const tablePanel = document.getElementById('review-table-panel');
-  const actionsPanel = document.getElementById('review-actions-panel');
-
-  if (!importBatch) {
-    tableBody.innerHTML = '<tr><td colspan="12">Укажите партию импорта</td></tr>';
-    tablePanel.style.display = 'flex';
-    return;
-  }
-
-  tableBody.innerHTML = '<tr><td colspan="12">Загрузка...</td></tr>';
-  tablePanel.style.display = 'flex';
-
-  try {
-    const response = await fetch(`/api/v1/bank-statement-review/rows?import_batch=${encodeURIComponent(importBatch)}`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
-    }
-    const rows = await response.json();
-    reviewCurrentRows = rows;
-    renderReviewTable(rows);
-    actionsPanel.style.display = 'block';
-    await loadReviewSummary(importBatch);
-  } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="12">Ошибка загрузки строк: ' + error.message + '</td></tr>';
-    console.error('Ошибка загрузки строк батча', error);
-  }
-}
-
-async function confirmSelectedRows() {
-  const resultText = document.getElementById('review-action-result');
-  const checkboxes = document.querySelectorAll('.review-row-checkbox:checked');
-  const rowIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.rowId, 10));
-
-  if (rowIds.length === 0) {
-    resultText.textContent = 'Выберите хотя бы одну строку';
-    return;
-  }
-
-  resultText.textContent = 'Подтверждение...';
-
-  try {
-    const response = await fetch('/api/v1/bank-statement-review/confirm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ row_ids: rowIds })
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
-    }
-    const data = await response.json();
-    resultText.textContent = data.message + ` (${data.affected_count} строк)`;
-    await loadReviewRows();
-  } catch (error) {
-    resultText.textContent = 'Ошибка подтверждения: ' + error.message;
-    console.error('Ошибка подтверждения строк', error);
-  }
-}
-
-async function postReviewBatch() {
-  const resultText = document.getElementById('review-action-result');
-  const importBatch = document.getElementById('review-batch-input').value.trim();
-
-  if (!importBatch) {
-    resultText.textContent = 'Укажите партию импорта';
-    return;
-  }
-
-  resultText.textContent = 'Проводка батча в ДДС...';
-
-  try {
-    const response = await fetch('/api/v1/bank-statement-review/post', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ import_batch: importBatch })
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
-    }
-    const data = await response.json();
-    resultText.textContent = data.message + ` (${data.affected_count} строк проведено)`;
-    await loadReviewRows();
-  } catch (error) {
-    resultText.textContent = 'Ошибка проводки батча: ' + error.message;
-    console.error('Ошибка проводки батча', error);
-  }
-}
-
-async function loadArticlesDatalist() {
-  const datalist = document.getElementById('articles-datalist');
-  try {
-    const response = await fetch('/api/v1/cashflow-categories/articles');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    cashflowArticlesList = data.articles || [];
-    datalist.innerHTML = cashflowArticlesList.map(a => `<option value="${a}"></option>`).join('');
-  } catch (error) {
-    console.error('Ошибка загрузки списка статей', error);
-  }
-}
+/* ---------- ПРОВЕРКА ИМПОРТА: ИСТОРИЯ + ТАБЛИЦА СТРОК ---------- */
 
 async function loadBatchHistory() {
-  const historyBody = document.getElementById('review-history-body');
-  historyBody.innerHTML = '<tr><td colspan="6">Загрузка истории...</td></tr>';
+  const listEl = document.getElementById('review-batch-list');
+  listEl.innerHTML = '<p class="panel-text">Загрузка истории...</p>';
 
   try {
     const response = await fetch('/api/v1/bank-statement-review/batches');
@@ -973,74 +792,348 @@ async function loadBatchHistory() {
     const batches = await response.json();
 
     if (!batches || batches.length === 0) {
-      historyBody.innerHTML = '<tr><td colspan="6">Выписки ещё не загружались</td></tr>';
+      listEl.innerHTML = `
+        <div class="empty-box">
+          <div class="empty-box-title">История пуста</div>
+          <p class="empty-box-text">Загрузите выписку на экране «Импорт данных» — она появится здесь.</p>
+        </div>`;
       return;
     }
 
-    historyBody.innerHTML = batches.map(b => {
-      const period = (b.min_date && b.max_date)
-        ? `${new Date(b.min_date).toLocaleDateString('ru-RU')} — ${new Date(b.max_date).toLocaleDateString('ru-RU')}`
-        : '—';
+    listEl.innerHTML = batches.map(batch => {
+      const dateRange = (batch.min_date && batch.max_date)
+        ? `${batch.min_date.slice(0, 10)} — ${batch.max_date.slice(0, 10)}`
+        : 'даты не определены';
+      const isActive = batch.import_batch === activeBatchId;
       return `
-        <tr>
-          <td>${b.source_file ?? '—'}</td>
-          <td>${period}</td>
-          <td>${b.total_rows}</td>
-          <td style="color:var(--success);">${b.confirmed_rows}</td>
-          <td style="color:var(--danger);">${b.deleted_rows}</td>
-          <td><button class="button button--secondary review-open-batch-button" data-batch="${b.import_batch}" type="button" style="padding:6px 10px; font-size:13px;">Открыть</button></td>
-        </tr>
-      `;
+        <div class="batch-item ${isActive ? 'active' : ''}" data-batch-id="${batch.import_batch}">
+          <div class="batch-item-main">
+            <div class="batch-item-file">${batch.source_file ?? 'Без имени файла'}</div>
+            <div class="batch-item-meta">${dateRange} · партия ${batch.import_batch}</div>
+          </div>
+          <div class="batch-item-stats">
+            <span>Всего строк: ${batch.total_rows}</span>
+            <span class="badge badge--success">Подтверждено: ${batch.confirmed_rows}</span>
+            ${batch.deleted_rows > 0 ? `<span class="badge badge--warning">Удалено: ${batch.deleted_rows}</span>` : ''}
+          </div>
+        </div>`;
     }).join('');
 
-    document.querySelectorAll('.review-open-batch-button').forEach(button => {
-      button.addEventListener('click', () => {
-        document.getElementById('review-batch-input').value = button.dataset.batch;
-        loadReviewRows();
+    document.querySelectorAll('.batch-item').forEach(item => {
+      item.addEventListener('click', () => {
+        activeBatchId = item.dataset.batchId;
+        document.querySelectorAll('.batch-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        loadBatchRows(activeBatchId);
       });
     });
+
   } catch (error) {
-    historyBody.innerHTML = '<tr><td colspan="6">Ошибка загрузки истории: ' + error.message + '</td></tr>';
+    listEl.innerHTML = '<p class="panel-text">Ошибка загрузки истории: ' + error.message + '</p>';
     console.error('Ошибка загрузки истории партий', error);
   }
 }
 
-async function autoClassifyBatch() {
-  const resultText = document.getElementById('review-action-result');
-  const importBatch = document.getElementById('review-batch-input').value.trim();
+async function loadBatchRows(importBatch) {
+  const detailPanel = document.getElementById('review-detail-panel');
+  const batchLabel = document.getElementById('review-batch-label');
+  const tableBody = document.getElementById('review-table-body');
+  const resultBox = document.getElementById('review-action-result');
 
-  if (!importBatch) {
-    resultText.textContent = 'Укажите партию импорта';
+  detailPanel.style.display = 'block';
+  resultBox.style.display = 'none';
+  batchLabel.textContent = `Партия: ${importBatch}`;
+  tableBody.innerHTML = '<tr><td colspan="12">Загрузка строк...</td></tr>';
+
+  try {
+    const response = await fetch(`/api/v1/bank-statement-review/rows?import_batch=${importBatch}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
+    renderReviewRows(rows);
+  } catch (error) {
+    tableBody.innerHTML = '<tr><td colspan="12">Ошибка загрузки строк: ' + error.message + '</td></tr>';
+    console.error('Ошибка загрузки строк партии', error);
+  }
+}
+
+function renderReviewRows(rows) {
+  const tbody = document.getElementById('review-table-body');
+
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="12">В этой партии нет строк</td></tr>';
     return;
   }
 
-  resultText.textContent = 'Автоматическое определение статей...';
+  tbody.innerHTML = rows.map(row => {
+    const isDeleted = row.is_deleted === 'yes';
+    return `
+      <tr data-row-id="${row.id}" class="${isDeleted ? 'row-deleted' : ''}">
+        <td><input type="checkbox" class="row-select" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}></td>
+        <td>${row.id}</td>
+        <td>${row.operation_datetime ? row.operation_datetime.slice(0, 10) : '—'}</td>
+        <td>${row.direction === 'inflow' ? 'Поступление' : 'Расход'}</td>
+        <td>
+          <input type="number" class="table-input amount-input" value="${row.amount ?? 0}" step="0.01"
+                 data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}>
+        </td>
+        <td>${row.counterparty_name ?? '—'}</td>
+        <td>${row.payment_purpose ?? '—'}</td>
+        <td>
+          <input type="text" class="table-input article-input" value="${row.article ?? ''}"
+                 placeholder="выберите или введите статью" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}>
+        </td>
+        <td>
+          <select class="table-select account-type-select" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}>
+            <option value="checking" ${row.account_type === 'checking' ? 'selected' : ''}>Расчётный</option>
+            <option value="credit" ${row.account_type === 'credit' ? 'selected' : ''}>Кредитный</option>
+            <option value="personal" ${row.account_type === 'personal' ? 'selected' : ''}>Личный</option>
+          </select>
+        </td>
+        <td>${row.validation_status ?? '—'}</td>
+        <td>${row.is_confirmed === 'yes' ? 'Да' : 'Нет'}</td>
+        <td>
+          <button class="button button--ghost delete-row-button" data-row-id="${row.id}" ${isDeleted ? 'disabled' : ''}>
+            ${isDeleted ? 'Удалена' : 'Удалить'}
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
 
+  attachRowEditHandlers();
+}
+
+function attachRowEditHandlers() {
+  document.querySelectorAll('.account-type-select').forEach(select => {
+    select.addEventListener('change', async (e) => {
+      await patchReviewRow(e.target.dataset.rowId, { account_type: e.target.value });
+    });
+  });
+
+  document.querySelectorAll('.amount-input').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const newAmount = parseFloat(e.target.value);
+      if (isNaN(newAmount) || newAmount <= 0) {
+        alert('Сумма должна быть положительным числом');
+        return;
+      }
+      await patchReviewRow(e.target.dataset.rowId, { amount: newAmount });
+    });
+  });
+
+  document.querySelectorAll('.article-input').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      await patchReviewRow(e.target.dataset.rowId, { article: e.target.value });
+    });
+  });
+
+  document.querySelectorAll('.delete-row-button').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const rowId = e.target.dataset.rowId;
+      if (!confirm('Удалить строку из партии?')) return;
+      await patchReviewRow(rowId, { is_deleted: 'yes' });
+      await loadBatchRows(activeBatchId);
+    });
+  });
+
+  document.getElementById('review-select-all').addEventListener('change', (e) => {
+    document.querySelectorAll('.row-select:not(:disabled)').forEach(cb => { cb.checked = e.target.checked; });
+  });
+}
+
+async function patchReviewRow(rowId, payload) {
+  try {
+    const response = await fetch(`/api/v1/bank-statement-review/rows/${rowId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${response.status}`);
+    }
+  } catch (error) {
+    alert('Не удалось сохранить изменение: ' + error.message);
+    console.error(error);
+  }
+}
+
+function showReviewActionResult(message) {
+  const box = document.getElementById('review-action-result');
+  document.getElementById('review-action-result-text').textContent = message;
+  box.style.display = 'block';
+}
+
+async function autoClassifyActiveBatch() {
+  if (!activeBatchId) return;
   try {
     const response = await fetch('/api/v1/bank-statement-review/auto-classify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ import_batch: importBatch })
+      body: JSON.stringify({ import_batch: activeBatchId }),
     });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
-    }
     const data = await response.json();
-    resultText.textContent = data.message;
-    await loadReviewRows();
+    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+    showReviewActionResult(data.message);
+    await loadBatchRows(activeBatchId);
   } catch (error) {
-    resultText.textContent = 'Ошибка автоклассификации: ' + error.message;
-    console.error('Ошибка автоклассификации', error);
+    showReviewActionResult('Ошибка автоклассификации: ' + error.message);
+    console.error(error);
   }
 }
 
-function setDefaultCashflowDates() {
-  const dateFromInput = document.getElementById('cashflow-date-from');
-  const dateToInput = document.getElementById('cashflow-date-to');
-  if (dateFromInput && !dateFromInput.value) dateFromInput.value = '2020-01-01';
-  if (dateToInput && !dateToInput.value) dateToInput.value = new Date().toISOString().slice(0, 10);
+async function confirmSelectedRows() {
+  if (!activeBatchId) return;
+  const rowIds = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => parseInt(cb.dataset.rowId, 10));
+  if (rowIds.length === 0) {
+    showReviewActionResult('Выберите хотя бы одну строку для подтверждения');
+    return;
+  }
+  try {
+    const response = await fetch('/api/v1/bank-statement-review/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ row_ids: rowIds }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+    showReviewActionResult(`${data.message}: ${data.affected_count} строк`);
+    await loadBatchRows(activeBatchId);
+  } catch (error) {
+    showReviewActionResult('Ошибка подтверждения: ' + error.message);
+    console.error(error);
+  }
 }
+
+async function postActiveBatch() {
+  if (!activeBatchId) return;
+  if (!confirm('Провести подтверждённые строки этой партии в ДДС?')) return;
+  try {
+    const response = await fetch('/api/v1/bank-statement-review/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ import_batch: activeBatchId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+    showReviewActionResult(`${data.message}. Проведено строк: ${data.affected_count}`);
+    await loadBatchHistory();
+  } catch (error) {
+    showReviewActionResult('Ошибка проведения батча: ' + error.message);
+    console.error(error);
+  }
+}
+
+/* ---------- РУЧНОЙ ВВОД ---------- */
+
+async function submitManualOperation(event) {
+  event.preventDefault();
+  const form = event.target;
+
+  const payload = {
+    operation_date: form.querySelector('#manual-date').value,
+    direction: form.querySelector('#manual-direction').value,
+    amount: parseFloat(form.querySelector('#manual-amount').value),
+    payment_purpose: form.querySelector('#manual-purpose').value,
+    counterparty_name: form.querySelector('#manual-counterparty').value,
+    article: form.querySelector('#manual-article').value,
+    account_type: form.querySelector('#manual-account-type').value,
+    section: 'operating',
+  };
+
+  try {
+    const response = await fetch('/api/v1/manual/cashflow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+
+    form.reset();
+    form.querySelector('#manual-account-type').value = 'personal';
+    await loadManualOperationsList();
+  } catch (error) {
+    alert('Ошибка сохранения: ' + error.message);
+    console.error(error);
+  }
+}
+
+async function loadManualOperationsList() {
+  const tbody = document.getElementById('manual-operations-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="6">Загрузка...</td></tr>';
+
+  try {
+    const response = await fetch('/api/v1/manual/cashflow');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const operations = await response.json();
+
+    if (!operations || operations.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6">Записей пока нет</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = operations.map(op => `
+      <tr data-op-id="${op.id}">
+        <td>${op.operation_datetime.slice(0, 10)}</td>
+        <td>${op.direction === 'inflow' ? 'Поступление' : 'Расход'}</td>
+        <td><input type="number" class="table-input manual-amount-edit" value="${op.amount}" step="0.01" data-op-id="${op.id}"></td>
+        <td>${op.payment_purpose ?? '—'}</td>
+        <td>
+          <select class="table-select manual-account-edit" data-op-id="${op.id}">
+            <option value="checking" ${op.account_type === 'checking' ? 'selected' : ''}>Расчётный</option>
+            <option value="credit" ${op.account_type === 'credit' ? 'selected' : ''}>Кредитный</option>
+            <option value="personal" ${op.account_type === 'personal' ? 'selected' : ''}>Личный</option>
+          </select>
+        </td>
+        <td><button class="button button--ghost manual-delete-button" data-op-id="${op.id}">Удалить</button></td>
+      </tr>
+    `).join('');
+
+    document.querySelectorAll('.manual-amount-edit').forEach(input => {
+      input.addEventListener('change', async (e) => {
+        await patchManualOperation(e.target.dataset.opId, { amount: parseFloat(e.target.value) });
+      });
+    });
+    document.querySelectorAll('.manual-account-edit').forEach(select => {
+      select.addEventListener('change', async (e) => {
+        await patchManualOperation(e.target.dataset.opId, { account_type: e.target.value });
+      });
+    });
+    document.querySelectorAll('.manual-delete-button').forEach(button => {
+      button.addEventListener('click', async (e) => {
+        const opId = e.target.dataset.opId;
+        if (!confirm('Удалить операцию?')) return;
+        await fetch(`/api/v1/manual/cashflow/${opId}`, { method: 'DELETE' });
+        await loadManualOperationsList();
+      });
+    });
+
+  } catch (error) {
+    tbody.innerHTML = '<tr><td colspan="6">Ошибка загрузки: ' + error.message + '</td></tr>';
+    console.error(error);
+  }
+}
+
+async function patchManualOperation(opId, payload) {
+  try {
+    const response = await fetch(`/api/v1/manual/cashflow/${opId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${response.status}`);
+    }
+  } catch (error) {
+    alert('Не удалось сохранить изменение: ' + error.message);
+    console.error(error);
+  }
+}
+
+/* ---------- ИНИЦИАЛИЗАЦИЯ ---------- */
 
 navButtons.forEach(button => button.addEventListener('click', () => showScreen(button.dataset.screen)));
 checkApiButton.addEventListener('click', checkApiStatus);
@@ -1051,17 +1144,13 @@ window.addEventListener('resize', () => {
 
 document.getElementById('cashflow-load-button').addEventListener('click', loadCashflowReport);
 document.getElementById('import-upload-button').addEventListener('click', uploadBankStatement);
-document.getElementById('review-load-button').addEventListener('click', loadReviewRows);
-document.getElementById('review-autoclassify-button').addEventListener('click', autoClassifyBatch);
+document.getElementById('review-autoclassify-button').addEventListener('click', autoClassifyActiveBatch);
 document.getElementById('review-confirm-selected-button').addEventListener('click', confirmSelectedRows);
-document.getElementById('review-post-batch-button').addEventListener('click', postReviewBatch);
-document.getElementById('review-select-all').addEventListener('change', (e) => {
-  document.querySelectorAll('.review-row-checkbox:not(:disabled)').forEach(cb => { cb.checked = e.target.checked; });
-});
+document.getElementById('review-post-button').addEventListener('click', postActiveBatch);
+document.getElementById('manual-form').addEventListener('submit', submitManualOperation);
 
 async function init() {
   showScreen('dashboard');
-  setDefaultCashflowDates();
   await loadSettingsInfo();
   await checkApiStatus();
 }

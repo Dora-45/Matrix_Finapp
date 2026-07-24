@@ -35,6 +35,8 @@ class BankStatementRowRead(BaseModel):
 class BankStatementRowUpdate(BaseModel):
     article: Optional[str] = None
     project: Optional[str] = None
+    account_type: Optional[str] = None
+    amount: Optional[Decimal] = None
     is_confirmed: Optional[str] = None
     is_deleted: Optional[str] = None
 

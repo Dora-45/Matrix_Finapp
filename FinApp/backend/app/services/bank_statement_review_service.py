@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
 from backend.app.models.bank_statement import BankStatementRow
@@ -36,6 +38,8 @@ class BankStatementReviewService:
         row_id: int,
         article: str | None = None,
         project: str | None = None,
+        account_type: str | None = None,
+        amount: Decimal | None = None,
         is_confirmed: str | None = None,
         is_deleted: str | None = None,
     ) -> BankStatementRow | None:
@@ -53,6 +57,12 @@ class BankStatementReviewService:
 
         if project is not None:
             row.project = project
+
+        if account_type is not None:
+            row.account_type = account_type
+
+        if amount is not None:
+            row.amount = amount
 
         if is_confirmed is not None:
             row.is_confirmed = is_confirmed
@@ -106,8 +116,6 @@ class BankStatementReviewService:
     def get_all_batches(self) -> list[dict]:
         """
         Возвращает список всех партий импорта (историю выписок) с краткой сводкой.
-        Нужен для экрана 'История загруженных выписок' — чтобы вернуться к любой
-        ранее загруженной выписке и внести изменения, не теряя предыдущие партии.
         Старые выписки никогда не удаляются из базы при загрузке новой — у каждой
         загрузки свой уникальный import_batch, этот метод делает историю видимой.
         """
@@ -148,7 +156,11 @@ class BankStatementReviewService:
         """
         Автоматически подставляет статью (article) и раздел ДДС (project)
         для строк батча без статьи, используя ключевые слова из справочника
-        CashflowCategory. Не трогает строки с уже заполненной статьёй.
+        CashflowCategory. Не трогает строки с уже заполненной статьёй и не
+        трогает account_type — тип счёта (расчётный/кредитный/личный)
+        редактируется отдельно вручную, так как в выписке он не всегда
+        определяется однозначно (например, кредитная карта может быть
+        привязана к расчётному счёту в проводке).
         """
         category_repo = CashflowCategoryRepository(self.db)
         categories = category_repo.get_all_active()

@@ -50,11 +50,7 @@ def get_batch_summary(
 
 @router.get("/batches")
 def list_batches(db: Session = Depends(get_db)):
-    """
-    Список всех загруженных партий импорта (история выписок).
-    Позволяет вернуться к любой ранее загруженной выписке и внести изменения —
-    ни одна партия не стирается при загрузке новой.
-    """
+    """Список всех загруженных партий импорта (история выписок)."""
     service = BankStatementReviewService(db)
     return service.get_all_batches()
 
@@ -70,6 +66,8 @@ def update_row(
         row_id=row_id,
         article=payload.article,
         project=payload.project,
+        account_type=payload.account_type,
+        amount=payload.amount,
         is_confirmed=payload.is_confirmed,
         is_deleted=payload.is_deleted,
     )
